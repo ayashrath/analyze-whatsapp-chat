@@ -18,17 +18,17 @@ whatsapp-analyse is a command-line program to analyse personal or group WhatsApp
 
 ### For Windows (generated with [PyInstaller](https://github.com/pyinstaller/pyinstaller))
 
-1. Download the whatsapp-analyse.exe file from releases (recommended - use the latest).
+1. Download the whatsapp-analyse.exe file from releases [link](https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser.exe).
 2. Then paste the whatsapp-analyse.exe file into any folder in Windows path (To find the list type - `echo %PATH%` in command prompt) **except System32 folder**
 
 ### For Unix Based OS (MacOS and Linux/GNU OSs)
 
-    sudo curl -L https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -o /usr/local/bin/whatsapp-analyser
+    sudo curl -L https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -o /usr/local/bin/whatsapp-analyser
     sudo chmod a+rx /usr/local/bin/whatsapp-analyser
 
 If you gon't have curl, you can use wget:
 
-    sudo wget https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -O usr/local/bin/whatsapp-analyser
+    sudo wget https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -O usr/local/bin/whatsapp-analyser
     sudo chmod a+rx usr/local/bin/whatsapp-analyser
 
 ## Extract Data
