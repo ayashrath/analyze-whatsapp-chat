@@ -1,0 +1,16 @@
+24/02/22, 1:00 pm - R: Hi!
+24/02/22, 2:18 pm - B: POLL:
+Example
+OPTION: Yes (5 votes)
+OPTION: No (0 votes)
+
+24/02/22, 2:18 pm - B: Vote in the poll!
+24/02/22, 2:20 pm - B: <Media omitted>
+24/02/22, 4:09 pm - B: This message was deleted
+26/02/22, 5:13 am - K: I don't want to do
+26/02/22, 5:15 am - B: Shut up!
+26/02/22, 5:15 am - B: Just vote
+26/02/22, 5:15 am - B: I need the votes by today's end
+26/02/22, 5:15 am - B: Okay!?
+26/02/22, 5:15 am - R: Have voted
+26/02/22, 5:19 am - B: Good Job
