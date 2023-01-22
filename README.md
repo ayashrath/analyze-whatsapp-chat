@@ -24,12 +24,12 @@ whatsapp-analyse is a command-line program to analyse personal or group WhatsApp
 
 ### For MacOS and Linux/GNU OSs)
 
-    sudo curl -L https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -o /usr/local/bin/whatsapp-analyser
+    sudo curl -L https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -o /usr/local/bin/whatsapp-analyser
     sudo chmod a+rx /usr/local/bin/whatsapp-analyser
 
 If you gon't use curl, you can use wget:
 
-    sudo wget https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -O usr/local/bin/whatsapp-analyser
+    sudo wget https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -O usr/local/bin/whatsapp-analyser
     sudo chmod a+rx usr/local/bin/whatsapp-analyser
 
 ## Extract Data
