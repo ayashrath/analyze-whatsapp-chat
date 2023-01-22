@@ -1,5 +1,5 @@
 """
-This are the output and processing for all the flags
+These are the output and processing for all the flags
 It also has functions which dictate how the values are printed out
 """
 
@@ -11,9 +11,10 @@ import operations
 # Print options -> functions which can be used to alter how certain value get printed out
 # To make output look better
 
+
 def int_comma_sep(number: float) -> str:
     """
-    Make int into str with commas as seperators
+    Make int into str with commas as separators
     It also rounds long float no
     """
 
@@ -21,10 +22,9 @@ def int_comma_sep(number: float) -> str:
     return f"{rounded_float:,}"
 
 
-
 # Flag handling -> Functions for all the cli flags
-
-def default_flag(categorised_data:dict) -> None:
+#
+def default_flag(categorised_data: dict) -> None:
     """
     handles the default flag data
     """
@@ -34,7 +34,7 @@ def default_flag(categorised_data:dict) -> None:
             continue
 
         person_data: list = categorised_data[person]
-        counts: tuple = operations.get_media_deleated_link_count(person_data)
+        counts: tuple = operations.get_media_deleted_link_count(person_data)
         no_words: int = operations.sum_of_words(person_data)
         no_chars: int = operations.sum_of_char(person_data)
 
@@ -46,7 +46,7 @@ def default_flag(categorised_data:dict) -> None:
         print("No of photos, videos, audio or GIFs sent = ", int_comma_sep(counts[0]))
         print("No of link shared = ", int_comma_sep(counts[2]))
         print("Number of words used = ", int_comma_sep(no_words))
-        print("Number of charcaters used = ", int_comma_sep((no_chars)))
+        print("Number of characters used = ", int_comma_sep(no_chars))
         try:
             print("Average length of words = ", int_comma_sep(no_chars/no_words), "characters")
         except ZeroDivisionError:
@@ -55,12 +55,12 @@ def default_flag(categorised_data:dict) -> None:
         print()
 
 
-def total_flag(categorised_data:dict) -> None:
+def total_flag(categorised_data: dict) -> None:
     """
     Handles for total data
     """
-    total_messages: int = 0                  # Counter Vairables
-    total_deleated: int = 0
+    total_messages: int = 0  # Counter Variable
+    total_deleted: int = 0
     total_no_media: int = 0
     total_link_shared: int = 0
     total_words: int = 0
@@ -68,12 +68,12 @@ def total_flag(categorised_data:dict) -> None:
 
     for person in categorised_data:
         person_data: list = categorised_data[person]
-        counts: tuple = operations.get_media_deleated_link_count(person_data)
+        counts: tuple = operations.get_media_deleted_link_count(person_data)
         no_words: int = operations.sum_of_words(person_data)
         no_chars: int = operations.sum_of_char(person_data)
 
         total_messages += len(person_data)
-        total_deleated += counts[1]
+        total_deleted += counts[1]
         total_no_media += counts[0]
         total_link_shared += counts[2]
         total_words += no_words
@@ -83,17 +83,17 @@ def total_flag(categorised_data:dict) -> None:
     print("Total :")
     print("------")
     print("No of messages sent in total = ", int_comma_sep(total_messages))
-    print("No of messages deleted = ", int_comma_sep(total_deleated))
+    print("No of messages deleted = ", int_comma_sep(total_deleted))
     print("No of photos, videos, audio or GIFs sent = ", int_comma_sep(total_no_media))
     print("No of link shared = ", int_comma_sep(total_link_shared))
     print("Number of words used = ", int_comma_sep(total_words))
-    print("Number of charcaters used = ", int_comma_sep(total_chars))
+    print("Number of characters used = ", int_comma_sep(total_chars))
     print("Average length of words = ", int_comma_sep(total_chars/total_words), "characters")
     print("Average length of messages = ", int_comma_sep(total_words/total_messages), "words")
     print()
 
 
-def word_list_flag(categorised_data:dict) -> None:
+def word_list_flag(categorised_data: dict) -> None:
     """
     Word Flag Handling
     """
@@ -109,22 +109,22 @@ def word_list_flag(categorised_data:dict) -> None:
     print("-------------------------")
     print("Word List (" + int_comma_sep(len(final_dict)) + " words) :")
     print("-------------------------")
-    print(json.dumps(final_dict, sort_keys=True, indent=4, ensure_ascii=False)) # To beautify the output, utf-8 allowed
+    print(json.dumps(final_dict, sort_keys=True, indent=4, ensure_ascii=False))  # To beautify the output, utf-8 allowed
     print()
 
 
-def link_list_flag(catagorised_data: dict) -> None:
+def link_list_flag(categorised_data: dict) -> None:
     """
     Link List Flag
     """
 
     total_link_lst: list = []
 
-    for person in catagorised_data:
+    for person in categorised_data:
         if person == "Notification":  # As we don't want any non-user stuff here
             continue
 
-        person_data = catagorised_data[person]
+        person_data = categorised_data[person]
         needed_lst: list = operations.get_link_list(person_data)
         if needed_lst:
             total_link_lst += needed_lst
@@ -149,7 +149,6 @@ def link_list_flag(catagorised_data: dict) -> None:
                 print()
         print()
 
-
     total_cleaned_dict: dict = operations.clean_sorted_link_dict(operations.count_link_list(total_link_lst))
 
     print("-------------------")
@@ -170,7 +169,7 @@ def notif_flag(categorised_data: dict) -> None:
     Notification Flag Handling
     """
 
-    person_data:list = categorised_data.get("Notification", [])
+    person_data: list = categorised_data.get("Notification", [])
 
     if not person_data:
         print("There are no notification data")
@@ -194,7 +193,7 @@ def notif_flag(categorised_data: dict) -> None:
         print("Group Name Change (" + int_comma_sep(len(data["Group Name"])) + " times):")
         counter = 1
         for record in data["Group Name"]:
-            print(counter, ". ", record[2].strip(), "(" + record[1] +") - on", record[0])
+            print(counter, ". ", record[2].strip(), "(" + record[1] + ") - on", record[0])
             counter += 1
     print()
 
@@ -206,12 +205,12 @@ def notif_flag(categorised_data: dict) -> None:
             print(person + "(" + str(data["Group Icon Change"][1][person][0]), "times): ", data["Group Icon Change"][1][person][1])
     print()
 
-    if not data["Group Discription Change"][0]:
+    if not data["Group Description Change"][0]:
         print("Either group description has never changed, else group description change data couldn't be found")
     else:
-        print("Group Description Change Record (" + int_comma_sep(data["Group Discription Change"][0]) + " times) =")
-        for person in data["Group Discription Change"][1]:
-            print(person + "(" + str(data["Group Discription Change"][1][person][0]), "times): ", data["Group Discription Change"][1][person][1])
+        print("Group Description Change Record (" + int_comma_sep(data["Group Description Change"][0]) + " times) =")
+        for person in data["Group Description Change"][1]:
+            print(person + "(" + str(data["Group Description Change"][1][person][0]), "times): ", data["Group Description Change"][1][person][1])
     print()
 
     if not data["Group Video Call"][0]:
@@ -246,19 +245,19 @@ def length_flag(categorised_data: dict) -> None:
         print(person + " :")
         print("-" * len(person) + "--")
         if len(longest_messg_data_lst) == 1:
-            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2]))  + " chars long) = ")
+            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2])) + " chars long) = ")
             print("1. Date: " + longest_messg_data_lst[0][0])
             print("2. Time: " + longest_messg_data_lst[0][1])
             print("3. Message: \n\"" + longest_messg_data_lst[0][2].rstrip(), end="")
             print("\"", end="")
         else:
             counter = 1
-            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2]))  + " chars long) = ")
+            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2])) + " chars long) = ")
             for messg in longest_messg_data_lst:
                 print(counter)
                 print("a. Date: " + messg[0])
                 print("b. Time: " + messg[1])
-                print("c. Message: \n \"" + messg[2].rstrip(), end = "")
+                print("c. Message: \n \"" + messg[2].rstrip(), end="")
                 print("\"", end="")
 
         print("\n")
@@ -275,14 +274,14 @@ def length_flag(categorised_data: dict) -> None:
     print("Total :")
     print("------")
     if len(longest_total_messg) == 1:
-        print("The total longest message (" + int_comma_sep(len(result_longest[0][1][2]))  + " characters long) = ")
+        print("The total longest message (" + int_comma_sep(len(result_longest[0][1][2])) + " characters long) = ")
         print("1. Date: " + result_longest[0][1][0])
         print("2. Time: " + result_longest[0][1][1])
         print("3. Message: \n\"" + result_longest[0][1][2].rstrip(), end="")
         print("\"", end="")
     else:
         counter = 1
-        print("The total longest message (" + int_comma_sep(len(result_longest[0][1][2]))  + ") = ")
+        print("The total longest message (" + int_comma_sep(len(result_longest[0][1][2])) + ") = ")
 
         for messg in result_longest:
             print(counter)
@@ -292,5 +291,5 @@ def length_flag(categorised_data: dict) -> None:
             print("3. Message: \n\"" + messg[1][2].rstrip(), end="")
             print("\"", end="")
 
-    print() # Extra print as above doesn't end with \n
+    print()  # Extra print as above doesn't end with \n
     print()

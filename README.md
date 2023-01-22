@@ -13,7 +13,7 @@
 
 ## Description
 
-whatsapp-analyse is a command-line program to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems.
+whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is procedurally programmed in Python.
 
 ## INSTALLATION
 
@@ -22,12 +22,12 @@ whatsapp-analyse is a command-line program to analyse personal or group WhatsApp
 1. Download the whatsapp-analyse.exe file from releases ([Latest](https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser.exe))
 2. Then paste the whatsapp-analyse.exe file into any folder in Windows path (To find the list type - `echo %PATH%` in command prompt) **except System32 folder**
 
-### For MacOS and Linux/GNU OSs)
+### For macOS and Linux/GNU OSs
 
     sudo curl -L https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -o /usr/local/bin/whatsapp-analyser
     sudo chmod a+rx /usr/local/bin/whatsapp-analyser
 
-If you gon't use curl, you can use wget:
+If you don't want to use curl, you can use wget:
 
     sudo wget https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -O usr/local/bin/whatsapp-analyser
     sudo chmod a+rx usr/local/bin/whatsapp-analyser
@@ -65,7 +65,7 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
       -n, --notification  Obtain data on non-user messages that occur in group chat (example - message indicating that the group's description was changed)
       -ll, --list-link    Obtain data of links present in the chat)
 
-For basic indiviual member's analysis (example.txt can be found in repo's root directory):
+For basic individual member's analysis (example.txt can be found in repo's root directory):
 
     $ whatsapp-analyse example.txt
 
@@ -116,11 +116,11 @@ For basic indiviual member's analysis (example.txt can be found in repo's root d
 ### To make a single executable from project files
 
 1. Open the build.py file located in tests directory.
-2. Change the values of variables FILE_LST and MODULES_LST, if required.
-3. Run the script and you should get file - whatsapp-analyse-full.
-4. If on MacOS or Linux, to make them executable and use the shabang - `chmod +x whatsapp-analyse-full`.
+2. Change the values of variables FILE_LST, MODULES_LST and BUILD_ON_UNIX_SYSTEM, if required.
+3. Run the script, and you should get file - whatsapp-analyse-full.
+4. If on macOS or Linux, to make them executable and use the shebang - `chmod +x whatsapp-analyse-full`.
 5. For windows
-    1. Install [pyinstaller](https://github.com/pyinstaller/pyinstaller).
+    1. Install [PyInstaller](https://github.com/pyinstaller/pyinstaller).
     2. Clone this repository.
     3. Then type this in command prompt or Powershell - `pyinstaller --noconfirm --onefile --console --clean whatsapp-analyse-full`.
     4. Then the .exe file can be found in the dist folder in the directory where you ran the above command.
@@ -135,9 +135,6 @@ For basic indiviual member's analysis (example.txt can be found in repo's root d
     - most active date
     - time analysis
   - Full analysis report return
-- impoved word list flag
-- iOS export .txt support
-- windows build-final.py support
-- UK and US date formats and 12 and 24 hr formats should be considered in extractor.py
+- improved word list flag
 - better data and scripts for testing
 - add data on how members were added or joined in a group in -n flag

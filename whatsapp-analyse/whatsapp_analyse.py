@@ -13,7 +13,7 @@ def cli_implementation() -> dict:
     """
 
     # Create a ArgumentParser
-    parser:argparse.ArgumentParser = argparse.ArgumentParser(description="Tool to analyse a WhatsApp Chat \n Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices")
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Tool to analyse a WhatsApp Chat \n Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices")
 
     # Potion where all the arguments and flags of the CLI is listed and implemented
     parser.add_argument("path", metavar="path", type=str, nargs=1, help="Path of Exported Text File of Chat")
@@ -22,15 +22,16 @@ def cli_implementation() -> dict:
     parser.add_argument("-ll", "--list-link", action="store_true", help="Obtain data of links present in the chat)")
     parser.add_argument("-l", "--length", action="store_true", help="Obtain detailed results concerning length of message")
     parser.add_argument("-w", "--word-list", action="store_true", help="Obtain data on all words used, including how many times it was used and who used it")
-    arg:argparse.Namespace = parser.parse_args()
+    arg: argparse.Namespace = parser.parse_args()
 
-    result_dict: dict = {}  # Holds the parsed data obtained from cli
-    result_dict["path"] = arg.path[0]
-    result_dict["total_bool"] = arg.total
-    result_dict["length_bool"] = arg.length
-    result_dict["word_list_bool"] = arg.word_list
-    result_dict["notification_bool"] = arg.notification
-    result_dict["link_list_bool"] = arg.list_link
+    result_dict: dict = {
+        "path": arg.path[0],
+        "total_bool": arg.total,
+        "length_bool": arg.length,
+        "word_list_bool": arg.word_list,
+        "notification_bool": arg.notification,
+        "link_list_bool": arg.list_link
+    }  # Holds the parsed data obtained from cli
 
     return result_dict
 
@@ -41,12 +42,13 @@ input_from_user: dict = cli_implementation()
 path: str = input_from_user["path"]
 total_summary_needed: bool = input_from_user["total_bool"]
 better_length_needed: bool = input_from_user["length_bool"]
-word_list_needed:bool = input_from_user["word_list_bool"]
+word_list_needed: bool = input_from_user["word_list_bool"]
 notification_needed: bool = input_from_user["notification_bool"]
 link_list_needed: bool = input_from_user["link_list_bool"]
 
-extracted_data: list = extractor.extract_data(path)
-catagorised_data: dict = extractor.catagorise_data(extracted_data)
+format_bool_tuple: tuple = extractor.data_format_android(path)
+extracted_data: list = extractor.extract_data(path, format_bool_tuple[0], format_bool_tuple[1])
+categorised_data: dict = extractor.categorise_data(extracted_data, format_bool_tuple[0])
 
 
 # Here all the flag gets checked and accordingly functions are called
@@ -54,20 +56,20 @@ catagorised_data: dict = extractor.catagorise_data(extracted_data)
 # Order - default or Notification, default+total, better length, word list
 # (Note - if default is true then no other output, and if it is not true then to get default you need to use --total)
 #
-if total_summary_needed == better_length_needed == word_list_needed == notification_needed  == link_list_needed == False: # The default case
-    flags.default_flag(catagorised_data)
+if not total_summary_needed and not better_length_needed and not word_list_needed and not notification_needed and not link_list_needed:  # The default case
+    flags.default_flag(categorised_data)
 else:
     if notification_needed:
-        flags.notif_flag(catagorised_data)
+        flags.notif_flag(categorised_data)
     if total_summary_needed:
-        flags.default_flag(catagorised_data)
-        flags.total_flag(catagorised_data)
+        flags.default_flag(categorised_data)
+        flags.total_flag(categorised_data)
     if link_list_needed:
-        flags.link_list_flag(catagorised_data)
+        flags.link_list_flag(categorised_data)
     if better_length_needed:
-        flags.length_flag(catagorised_data)
+        flags.length_flag(categorised_data)
     if word_list_needed:
-        flags.word_list_flag(catagorised_data)
+        flags.word_list_flag(categorised_data)
 
 print()
-print("Done!")
+print("🎉🎉🎉 Done!")

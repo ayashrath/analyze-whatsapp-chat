@@ -6,3 +6,9 @@ settings.json
 
 # .pyc files 
 *.pyc
+
+# venv folder
+./venv/*
+
+# .idea folder created by PyCharm
+.idea/*
