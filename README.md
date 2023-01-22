@@ -19,17 +19,17 @@ whatsapp-analyse is a command-line program, to analyse personal or group WhatsAp
 
 ### For Windows
 
-1. Download the whatsapp-analyse.exe file from releases ([Latest](https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser.exe))
+1. Download the whatsapp-analyse.exe file from releases ([Latest](https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.1/whatsapp-analyser.exe))
 2. Then paste the whatsapp-analyse.exe file into any folder in Windows path (To find the list type - `echo %PATH%` in command prompt) **except System32 folder**
 
 ### For macOS and Linux/GNU OSs
 
-    sudo curl -L https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -o /usr/local/bin/whatsapp-analyser
+    sudo curl -L https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.1/whatsapp-analyser -o /usr/local/bin/whatsapp-analyser
     sudo chmod a+rx /usr/local/bin/whatsapp-analyser
 
 If you don't want to use curl, you can use wget:
 
-    sudo wget https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser -O usr/local/bin/whatsapp-analyser
+    sudo wget https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.1/whatsapp-analyser -O usr/local/bin/whatsapp-analyser
     sudo chmod a+rx usr/local/bin/whatsapp-analyser
 
 ## Extract Data
@@ -50,20 +50,20 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
 
     $ whatsapp-analyse --help 
 
-    usage: whatsapp-analyse-full [-h] [-t] [-l] [-w] [-n] [-ll] path
+    usage: whatsapp_analyse.py [-h] [-n] [-t] [-ll] [-l] [-w] path
 
     Tool to analyse a WhatsApp Chat Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices
-
+    
     positional arguments:
     path                Path of Exported Text File of Chat
-
+    
     options:
       -h, --help          show this help message and exit
+      -n, --notification  Obtain data on non-user messages (mainly in group chats) that occur in group chat, like a group's icon was changed
       -t, --total         Obtain data on the chat as a whole, in addition to data computed by default
+      -ll, --list-link    Obtain data of links present in the chat)
       -l, --length        Obtain detailed results concerning length of message
       -w, --word-list     Obtain data on all words used, including how many times it was used and who used it
-      -n, --notification  Obtain data on non-user messages that occur in group chat (example - message indicating that the group's description was changed)
-      -ll, --list-link    Obtain data of links present in the chat)
 
 For basic individual member's analysis (example.txt can be found in repo's root directory):
 
@@ -77,10 +77,9 @@ For basic individual member's analysis (example.txt can be found in repo's root 
     No of photos, videos, audio or GIFs sent =  0
     No of link shared =  0
     Number of words used =  3
-    Number of charcaters used =  11
+    Number of characters used =  11
     Average length of words =  3.67 characters
     Average length of messages =  1.5 words
-    
     
     ---
     B :
@@ -90,11 +89,10 @@ For basic individual member's analysis (example.txt can be found in repo's root 
     No of photos, videos, audio or GIFs sent =  1
     No of link shared =  0
     Number of words used =  35
-    Number of charcaters used =  135
+    Number of characters used =  135
     Average length of words =  3.86 characters
     Average length of messages =  3.89 words
-    
-    
+
     ---
     K :
     ---
@@ -103,13 +101,12 @@ For basic individual member's analysis (example.txt can be found in repo's root 
     No of photos, videos, audio or GIFs sent =  0
     No of link shared =  0
     Number of words used =  6
-    Number of charcaters used =  13
+    Number of characters used =  13
     Average length of words =  2.17 characters
     Average length of messages =  6.0 words
     
     
-    
-    Done!
+    🎉🎉🎉 Done!
 
 ## Building
 
