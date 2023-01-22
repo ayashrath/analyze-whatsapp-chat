@@ -8,7 +8,8 @@
 - [Installation](#installation)
 - [Extract Data](#extract-data)
 - [Usage](#usage)
-- [Building and Testing](#building-and-testing)
+- [Building](#building)
+- [Features to be added and Known Bugs](#features-to-add--bugs-to-solve)
 
 ## Description
 
@@ -16,17 +17,17 @@ whatsapp-analyse is a command-line program to analyse personal or group WhatsApp
 
 ## INSTALLATION
 
-### For Windows (generated with [PyInstaller](https://github.com/pyinstaller/pyinstaller))
+### For Windows
 
-1. Download the whatsapp-analyse.exe file from releases (recommended - use the latest).
+1. Download the whatsapp-analyse.exe file from releases ([Latest](https://github.com/ayashrath/analyze-whatsapp-chat/releases/download/v1.0/whatsapp-analyser.exe))
 2. Then paste the whatsapp-analyse.exe file into any folder in Windows path (To find the list type - `echo %PATH%` in command prompt) **except System32 folder**
 
-### For Unix Based OS (MacOS and Linux/GNU OSs)
+### For MacOS and Linux/GNU OSs)
 
     sudo curl -L https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -o /usr/local/bin/whatsapp-analyser
     sudo chmod a+rx /usr/local/bin/whatsapp-analyser
 
-If you gon't have curl, you can use wget:
+If you gon't use curl, you can use wget:
 
     sudo wget https://raw.githubusercontent.com/ayashrath/analyse-whatsapp-chat/master/whatsapp-analyser.py -O usr/local/bin/whatsapp-analyser
     sudo chmod a+rx usr/local/bin/whatsapp-analyser
@@ -35,7 +36,7 @@ If you gon't have curl, you can use wget:
 
 ### Android
 
-Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/1180414079177245) for information on how to extract data which needs to be analysed
+Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/1180414079177245) for information on how to extract data which needs to be analysed.
 
 ### iOS
 
@@ -110,19 +111,19 @@ For basic indiviual member's analysis (example.txt can be found in repo's root d
     
     Done!
 
-## Building and Testing
+## Building
 
 ### To make a single executable from project files
 
-1. Open the build-final.py file located in tests directory
-2. Change the values of variables FILE_LST and MODULES_LST, if required
-3. Run the script and you should get file - whatsapp-analyse-full
-4. If on MacOS or Linux, to make them executable and use the shabang - `chmod +x whatsapp-analyse-full`
+1. Open the build.py file located in tests directory.
+2. Change the values of variables FILE_LST and MODULES_LST, if required.
+3. Run the script and you should get file - whatsapp-analyse-full.
+4. If on MacOS or Linux, to make them executable and use the shabang - `chmod +x whatsapp-analyse-full`.
 5. For windows
-    1. Install pyinstaller by typing this out in command prompt or Powershell - `pip install pyinstaller`  
-    2. Clone this repository  
-    3. Then type this in command prompt or Powershell - `pyinstaller --noconfirm --onefile --console --clean path_of_whatsapp-analyse.py`  
-    4. Then the .exe file can be found in the dist folder in the directory where you ran the above command
+    1. Install [pyinstaller](https://github.com/pyinstaller/pyinstaller).
+    2. Clone this repository.
+    3. Then type this in command prompt or Powershell - `pyinstaller --noconfirm --onefile --console --clean whatsapp-analyse-full`.
+    4. Then the .exe file can be found in the dist folder in the directory where you ran the above command.
 
 ## Features to add / Bugs to solve
 
@@ -134,8 +135,9 @@ For basic indiviual member's analysis (example.txt can be found in repo's root d
     - most active date
     - time analysis
   - Full analysis report return
-- impoved word list
-- iOS .txt support
+- impoved word list flag
+- iOS export .txt support
 - windows build-final.py support
-- UK and US date formats -> date info extract in extractor.py
+- UK and US date formats and 12 and 24 hr formats should be considered in extractor.py
 - better data and scripts for testing
+- add data on how members were added or joined in a group in -n flag
