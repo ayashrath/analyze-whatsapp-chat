@@ -13,7 +13,7 @@ def cli_implementation() -> dict:
     """
 
     # Create a ArgumentParser
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Tool to analyse a WhatsApp Chat \n Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices")
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Tool to analyse a WhatsApp Chat. \n Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices")
 
     # Potion where all the arguments and flags of the CLI is listed and implemented
     parser.add_argument("path", metavar="path", type=str, nargs=1, help="Path of Exported Text File of Chat")

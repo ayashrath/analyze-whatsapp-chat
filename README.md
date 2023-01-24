@@ -13,7 +13,9 @@
 
 ## Description
 
-whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is procedurally programmed in Python.
+whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is procedurally programmed in Python.  
+
+It works on the data that is present on your phone, i.e., this tool can't analyse messages that have been cleared from history, and it can't analyse data which may appear on your phone but not present in the exported txt file, like group descriptions
 
 ## INSTALLATION
 
@@ -134,4 +136,5 @@ For basic individual member's analysis (example.txt can be found in repo's root 
   - Full analysis report return
 - improved word list flag
 - better data and scripts for testing
-- add data on how members were added or joined in a group in -n flag
+- Time of 1st and last message -> should be added in default and total
+- Also totally inactive member list

@@ -40,12 +40,18 @@ SEARCH_TERM_GRP_DESC_CHANGE: str = "changed the group description"  # messg exam
 SEARCH_TERM_GRP_VIDEO_CALL: str = "started a video call"  # messg example: K started a video call
 SEARCH_TERM_GRP_ICON_CHANGE: str = "changed this group's icon"  # messg example: K changed this group's icon
 
-SEARCH_TERM_GRP_CREATOR: str = "created group"  # messg example: K created group "EXAMPLE"
+SEARCH_TERM_GRP_CREATOR: str = "created group"  # messg example: K created group "EX"
 SPLIT_TERM_GRP_CREATOR_NAME: str = "created"
 SPLIT_TERM_GRP_CREATOR_GRP_NAME: str = "group"
 
-SEARCH_TERM_GRP_NAME_CHANGE: str = "changed the subject from"  # messg example: K changed the subject from  "EXAMPLE" to "example"
+SEARCH_TERM_GRP_NAME_CHANGE: str = "changed the subject from"  # messg example: K changed the subject from  "EX" to "ex"
 SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME: str = "to"
+
+SEARCH_TERM_GRP_MEMBER_ADD: str = "added"  # messg example: K added A
+SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK: str = "joined using this group's invite link"  # message example: K joined using this group's invite link
+
+SEARCH_TERM_GRP_MEMBER_REMOVED: str = "removed"  # messg example: K removed A
+SEARCH_TERM_GRP_MEMBER_LEFT: str = "left"  # message example: K left
 
 
 def get_link_list(categorised_data_key: list) -> list:
@@ -113,7 +119,19 @@ def clean_sorted_link_dict(sorted_link_dict: dict) -> dict:
                 if "youtube.com/watch?v" in link:  # Add elif(s) for a new site that requires ? to function
                     new_lst.append(link)
                     break
-            new_lst.append(link[:link.find("?")])
+            link_to_add: str = ""
+
+            pos_question_mark = link.find("?")
+
+            if pos_question_mark != -1:
+                link_to_add = link[:link.find("?")]
+            else:  # As if there is no ? then returns -1 which would remove the last char of link if above used
+                link_to_add = link
+
+            if link_to_add[-1] == "/":  # To remove '/' at end in links as '/' don't serve a purpose in a link
+                link_to_add = link_to_add[:-1]
+
+            new_lst.append(link_to_add)
 
         output_dict[site] = new_lst
 
@@ -240,26 +258,20 @@ def notif_data(categorised_data_key: list) -> dict:
         "Group Description Change": [0, {}],
         "Group Video Call": [0, {}],
         "Group Icon Change": [0, {}],
-        "Group Name": []
+        "Group Name": [],
+        "Member Add": [],
+        "Member Subtract": []
     }
 
     for date_time_messg in categorised_data_key:
         date = date_time_messg[0]  # time is determined to be not a useful metric here
         messg = date_time_messg[2]
 
-        if SEARCH_TERM_GRP_DESC_CHANGE in messg:
-            person_name: str = messg.split(SEARCH_TERM_GRP_DESC_CHANGE)[0]
+        # below ordered by expected chance of encounter, like here creator is at last as it will appear only once
+        if SEARCH_TERM_GRP_VIDEO_CALL in messg:
+            person_name: str = messg.split(SEARCH_TERM_GRP_VIDEO_CALL)[0]
 
-            temp_get_data: list = data["Group Description Change"][1].get(person_name, [0, []])
-            temp_get_data[0] += 1
-            temp_get_data[1] += [date]
-            data["Group Description Change"][1][person_name] = temp_get_data
-
-            data["Group Description Change"][0] += 1
-        elif SEARCH_TERM_GRP_VIDEO_CALL in messg:
-            person_name = messg.split(SEARCH_TERM_GRP_VIDEO_CALL)[0]
-
-            temp_get_data = data["Group Video Call"][1].get(person_name, [0, []])
+            temp_get_data: list = data["Group Video Call"][1].get(person_name, [0, []])
             temp_get_data[0] += 1
             temp_get_data[1] += [date]
             data["Group Video Call"][1][person_name] = temp_get_data
@@ -274,9 +286,35 @@ def notif_data(categorised_data_key: list) -> dict:
             data["Group Icon Change"][1][person_name] = temp_get_data
 
             data["Group Icon Change"][0] += 1
+        elif SEARCH_TERM_GRP_DESC_CHANGE in messg:
+            person_name = messg.split(SEARCH_TERM_GRP_DESC_CHANGE)[0]
+
+            temp_get_data = data["Group Description Change"][1].get(person_name, [0, []])
+            temp_get_data[0] += 1
+            temp_get_data[1] += [date]
+            data["Group Description Change"][1][person_name] = temp_get_data
+
+            data["Group Description Change"][0] += 1
         elif SEARCH_TERM_GRP_NAME_CHANGE in messg:
             name_changer: str = messg.split(SEARCH_TERM_GRP_NAME_CHANGE)[0].strip()
             data["Group Name"].append((date, name_changer, messg.split(SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME)[-1]))
+        elif SEARCH_TERM_GRP_MEMBER_ADD in messg:
+            split_message: list = messg.split(SEARCH_TERM_GRP_MEMBER_ADD)
+            new_member_name: str = split_message[1].strip().capitalize()  # To capitalize Y in "you" if it is = "you"
+            who_added_member: str = split_message[0].strip()
+            data["Member Add"] += [(new_member_name, who_added_member, date)]
+        elif SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK in messg:
+            new_member_name = messg.split(SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK)[0].strip()
+            who_added_member = "Joined by link"
+            data["Member Add"] += [(new_member_name, who_added_member, date)]
+        elif SEARCH_TERM_GRP_MEMBER_LEFT in messg:
+            person_name_who_left: str = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
+            removed_by: str = "themselves"
+            data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
+        elif SEARCH_TERM_GRP_MEMBER_REMOVED in messg:
+            person_name_who_left = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[1].strip()
+            removed_by = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
+            data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
         elif SEARCH_TERM_GRP_CREATOR in messg:
             data["Group Creator"] = messg.split(SPLIT_TERM_GRP_CREATOR_NAME)[0].strip()
             data["Group Name"].append((date, data["Group Creator"], messg.split(SPLIT_TERM_GRP_CREATOR_GRP_NAME)[-1]))

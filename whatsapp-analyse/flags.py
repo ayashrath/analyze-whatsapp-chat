@@ -22,6 +22,21 @@ def int_comma_sep(number: float) -> str:
     return f"{rounded_float:,}"
 
 
+def str_lst_to_str(lst_to_be_printed: list) -> str:
+    """
+    Takes a short list of string like - ['11/08/22', '30/08/22']
+    And returns -> '11/08/22, 30/08/22'
+    """
+
+    final_str: str = ""
+
+    for element in lst_to_be_printed[:-1]:
+        final_str += element + ", "
+    final_str += lst_to_be_printed[-1]  # To avoid string to end with ','
+
+    return final_str
+
+
 # Flag handling -> Functions for all the cli flags
 #
 def default_flag(categorised_data: dict) -> None:
@@ -144,7 +159,7 @@ def link_list_flag(categorised_data: dict) -> None:
                 print(site + " (" + str(len(cleaned_dict[site])) + " links): ")
                 counter = 1
                 for link in cleaned_dict[site]:
-                    print(counter, ". ", link)
+                    print(int_comma_sep(counter) + ".", link)
                     counter += 1
                 print()
         print()
@@ -158,7 +173,7 @@ def link_list_flag(categorised_data: dict) -> None:
         print(site + " (" + str(len(total_cleaned_dict[site])) + " links): ")
         counter = 1
         for link in total_cleaned_dict[site]:
-            print(counter, ". ", link)
+            print(int_comma_sep(counter) + ".", link)
             counter += 1
         print()
     print()
@@ -178,6 +193,7 @@ def notif_flag(categorised_data: dict) -> None:
         data = operations.notif_data(person_data)
 
     # Below if-else is used to handle cases where there were, for example no group icon change
+    # Order of print, ordered by how important it is
     print("-------------------------------------------------------")
     print("Notification (You - The person who exported the data) :")
     print("-------------------------------------------------------")
@@ -187,13 +203,39 @@ def notif_flag(categorised_data: dict) -> None:
         print("The Group was created by = ", data["Group Creator"])
     print()
 
+    if not data["Member Add"]:
+        print("Data on member who joined with group link, or were added couldn't be found")
+    else:
+        print("Member joining sequence (" + int_comma_sep(len(data["Member Add"])) + " additions):")
+        counter = 1
+        for member_add_tuple in data["Member Add"]:
+            if member_add_tuple[1] == "Joined by link":
+                print(int_comma_sep(counter) + ". ", member_add_tuple[0], "joined by link", "on", member_add_tuple[2])
+            else:
+                print(int_comma_sep(counter) + ". ", member_add_tuple[0], "was added by", member_add_tuple[1], "on", member_add_tuple[2])
+            counter += 1
+    print()
+
+    if not data["Member Subtract"]:
+        print("Data on member who joined with group link, or were added couldn't be found")
+    else:
+        print("Member leaving/getting removed sequence (" + int_comma_sep(len(data["Member Subtract"])) + " leaves):")
+        counter = 1
+        for member_subtract_tuple in data["Member Subtract"]:
+            if member_subtract_tuple[1] == "themselves":
+                print(int_comma_sep(counter) + ". ", member_subtract_tuple[0], "left", "on", member_subtract_tuple[2])
+            else:
+                print(int_comma_sep(counter) + ". ", member_subtract_tuple[0], "was removed by", member_subtract_tuple[1], "on", member_subtract_tuple[2])
+            counter += 1
+    print()
+
     if not data["Group Name"]:
         print("Either group name has never changed, else group name change data couldn't be found")
     else:
         print("Group Name Change (" + int_comma_sep(len(data["Group Name"])) + " times):")
         counter = 1
         for record in data["Group Name"]:
-            print(counter, ". ", record[2].strip(), "(" + record[1] + ") - on", record[0])
+            print(int_comma_sep(counter) + ". ", record[2].strip(), "(" + record[1] + ") - on", record[0])
             counter += 1
     print()
 
@@ -202,7 +244,7 @@ def notif_flag(categorised_data: dict) -> None:
     else:
         print("Group DP Change Record (" + int_comma_sep(data["Group Icon Change"][0]) + " times) =")
         for person in data["Group Icon Change"][1]:
-            print(person + "(" + str(data["Group Icon Change"][1][person][0]), "times): ", data["Group Icon Change"][1][person][1])
+            print(person + "(" + str(data["Group Icon Change"][1][person][0]), "times):", str_lst_to_str(data["Group Icon Change"][1][person][1]))
     print()
 
     if not data["Group Description Change"][0]:
@@ -210,7 +252,7 @@ def notif_flag(categorised_data: dict) -> None:
     else:
         print("Group Description Change Record (" + int_comma_sep(data["Group Description Change"][0]) + " times) =")
         for person in data["Group Description Change"][1]:
-            print(person + "(" + str(data["Group Description Change"][1][person][0]), "times): ", data["Group Description Change"][1][person][1])
+            print(person + "(" + str(data["Group Description Change"][1][person][0]), "times):", str_lst_to_str(data["Group Description Change"][1][person][1]))
     print()
 
     if not data["Group Video Call"][0]:
@@ -218,7 +260,7 @@ def notif_flag(categorised_data: dict) -> None:
     else:
         print("Group Video Call Record (" + int_comma_sep(data["Group Video Call"][0]) + " times) =")
         for person in data["Group Video Call"][1]:
-            print(person + "(" + str(data["Group Video Call"][1][person][0]), "times): ", data["Group Video Call"][1][person][1])
+            print(person + "(" + str(data["Group Video Call"][1][person][0]), "times):", str_lst_to_str(data["Group Video Call"][1][person][1]))
     print()
 
 
