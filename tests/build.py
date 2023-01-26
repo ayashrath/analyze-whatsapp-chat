@@ -1,19 +1,29 @@
 """
-Here the idea is that it goes through folder whatsapp-analyse and combines all of them into a single file for purpose of creating an executable
+Here the idea is that it goes through folder whatsapp-analyse and combines all of them into a single file
+for purpose of creating an executable
 """
 
 import sys
+
 
 FILE_LST: list = [
     "../whatsapp-analyse/extractor.py",
     "../whatsapp-analyse/operations.py",
     "../whatsapp-analyse/flags.py",
-    "../whatsapp-analyse/whatsapp_analyse.py"
-]  # in order of dependence (i.e, the 1st one is one which doesn't depend on others, next one either is also the same or depends on previous)
+    "../whatsapp-analyse/whatsapp_analyse.py",
+]  # in order of dependence
+# (i.e, the 1st one is one which doesn't depend on others, next one either is also the same or depends on previous)
 
-MODULES_LST: list = ["re", "sys", "json", "argparse"]  # These are the modules needed by the project
+MODULES_LST: list = [
+    "re",
+    "sys",
+    "json",
+    "argparse",
+]  # These are the modules needed by the project
 
 BUILD_ON_UNIX_SYSTEM: bool = True  # Used as unix based use '/' in file path while windows uses '\'
+
+SHEBANG_STATEMENT: str = "#!/usr/bin/env python3"
 
 print("Designed to work on a unix based system, not windows, for windows use changes need to be made in how file path "
       "are treated")
@@ -36,7 +46,7 @@ def remove_user_defined_module_references(main_str: str, sub_str: str) -> str:
 
 with open("./whatsapp-analyse-full", "w", encoding="utf-8") as fh:
     if BUILD_ON_UNIX_SYSTEM:
-        fh.write("#!/usr/bin/env python3\n\n")
+        fh.write(SHEBANG_STATEMENT + "\n\n")
 
     for module in MODULES_LST:
         fh.write("import " + module + "\n")

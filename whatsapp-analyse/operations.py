@@ -9,8 +9,8 @@ import re
 
 # Used in stuff handling of links
 #
-STRINGS_USED_TO_IDENTIFY_LINKS: list = ["http", ".com", ".org"]  # http also matches https
-TOP_SITES: dict = {
+STRINGS_USED_TO_IDENTIFY_LINKS: list[str] = ["http", ".com", ".org"]  # http also matches https
+TOP_SITES: dict[str, list[str]] = {
         "YouTube": ["youtube.", "youtu.be"],
         "Google": ["google.", "goog.le", "g.co"],
         "Wikipedia": ["wikipedia."],
@@ -21,7 +21,7 @@ TOP_SITES: dict = {
         "Yandex": ["yandex.ru"],
         "TicTok": ["tiktok."],
         "Bilibili": ["bilibili.com"],
-        "News": ["cnn.com", "bbc.", "msn.com"]
+        "News": ["cnn.com", "bbc.", "msn.com"],
     }  # ending with . for some sites as, sites like YouTube have multiple domain names
 
 # Special Messages that indicate if media was there in the message, message was deleted
@@ -36,31 +36,53 @@ RE_FOR_ALL_WORDS: str = r'\w+'
 
 # Used in notification flag - to find type of non-user message and sub-str to split message and find required info
 #
-SEARCH_TERM_GRP_DESC_CHANGE: str = "changed the group description"  # messg example: K changed the group description
-SEARCH_TERM_GRP_VIDEO_CALL: str = "started a video call"  # messg example: K started a video call
-SEARCH_TERM_GRP_ICON_CHANGE: str = "changed this group's icon"  # messg example: K changed this group's icon
 
-SEARCH_TERM_GRP_CREATOR: str = "created group"  # messg example: K created group "EX"
+# messg example: K changed the group description
+# messg example: K started a video call
+# messg example: K changed this group's icon
+SEARCH_TERM_GRP_DESC_CHANGE: str = "changed the group description"
+SEARCH_TERM_GRP_VIDEO_CALL: str = "started a video call"
+SEARCH_TERM_GRP_ICON_CHANGE: str = "changed this group's icon"
+
+# messg example: K created group "EX"
+SEARCH_TERM_GRP_CREATOR: str = "created group"
 SPLIT_TERM_GRP_CREATOR_NAME: str = "created"
 SPLIT_TERM_GRP_CREATOR_GRP_NAME: str = "group"
 
-SEARCH_TERM_GRP_NAME_CHANGE: str = "changed the subject from"  # messg example: K changed the subject from  "EX" to "ex"
+# messg example: K changed the subject from  "EX" to "ex"
+SEARCH_TERM_GRP_NAME_CHANGE: str = "changed the subject from"
 SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME: str = "to"
 
-SEARCH_TERM_GRP_MEMBER_ADD: str = "added"  # messg example: K added A
-SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK: str = "joined using this group's invite link"  # message example: K joined using this group's invite link
+# messg example: K added A
+# message example: K joined using this group's invite link
+SEARCH_TERM_GRP_MEMBER_ADD: str = "added"
+SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK: str = "joined using this group's invite link"
 
-SEARCH_TERM_GRP_MEMBER_REMOVED: str = "removed"  # messg example: K removed A
-SEARCH_TERM_GRP_MEMBER_LEFT: str = "left"  # message example: K left
+# messg example: K removed A
+# message example: K left
+SEARCH_TERM_GRP_MEMBER_REMOVED: str = "removed"
+SEARCH_TERM_GRP_MEMBER_LEFT: str = "left"
 
 
-def get_link_list(categorised_data_key: list) -> list:
+def get_first_and_last_date_ordered_list(categorised_data_key: list[tuple[str, str, str]]) -> tuple[str, str]:
+    """
+    It returns the first and last entry from a list of tuple containing date, time and message
+    And it is ordered by date and time from oldest to earliest
+    """
+
+    oldest_date: str = categorised_data_key[0][0]
+    newest_date: str = categorised_data_key[-1][0]
+
+    return oldest_date, newest_date
+
+
+def get_link_list(categorised_data_key: list[tuple[str, str, str]]) -> list[str]:
     """
     Get list of links from categorised_data_key
     Assumes that people don't write - text<link> with no whitespace in between
     """
 
-    lst_of_links: list = []
+    lst_of_links: list[str] = []
 
     for date_time_messg in categorised_data_key:
         messg = date_time_messg[2]
@@ -77,14 +99,14 @@ def get_link_list(categorised_data_key: list) -> list:
     return lst_of_links
 
 
-def count_link_list(link_lst: list) -> dict:
+def count_link_list(link_lst: list[str]) -> dict[str, list[str]]:
     """
     Give count analysis of the link when list of links is passed through
     Uses user_defined dict for categorisation
     Uses top sites that people are most probably going to share
     """
 
-    output_dict: dict = {}
+    output_dict: dict[str, list[str]] = {}
 
     for link in link_lst:
         site_added: bool = False
@@ -102,14 +124,14 @@ def count_link_list(link_lst: list) -> dict:
     return output_dict
 
 
-def clean_sorted_link_dict(sorted_link_dict: dict) -> dict:
+def clean_sorted_link_dict(sorted_link_dict: dict[str, list[str]]) -> dict[str, list[str]]:
     """
     Clean links in sorted link dict -> output of get_link_list ()
     It helps remove the parts of url for specific sites which are not important to access content
     It would be easy to remove everything after '?' but then this may break some links
     example - YouTube needs watch?v= to access the video
     """
-    output_dict: dict = {}
+    output_dict: dict[str, list[str]] = {}
 
     for site in sorted_link_dict:
         link_lst = sorted_link_dict[site]
@@ -119,12 +141,11 @@ def clean_sorted_link_dict(sorted_link_dict: dict) -> dict:
                 if "youtube.com/watch?v" in link:  # Add elif(s) for a new site that requires ? to function
                     new_lst.append(link)
                     break
-            link_to_add: str = ""
 
             pos_question_mark = link.find("?")
 
             if pos_question_mark != -1:
-                link_to_add = link[:link.find("?")]
+                link_to_add: str = link[:link.find("?")]
             else:  # As if there is no ? then returns -1 which would remove the last char of link if above used
                 link_to_add = link
 
@@ -138,7 +159,7 @@ def clean_sorted_link_dict(sorted_link_dict: dict) -> dict:
     return output_dict
 
 
-def get_media_deleted_link_count(categorised_data_key: list) -> tuple:
+def get_media_deleted_link_count(categorised_data_key: list[tuple[str, str, str]]) -> tuple[int, int, int]:
     """
     Get count of media, message deleted, links
     """
@@ -161,13 +182,13 @@ def get_media_deleted_link_count(categorised_data_key: list) -> tuple:
     return media_counter, deleted_counter, link_counter
 
 
-def longest_message_calculate(categorised_data_key: list) -> list:
+def longest_message_calculate(categorised_data_key: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
     """
     Gets the largest message by total chars
     If 2 or more strings have the same length and are the longest - this still works
     """
 
-    current_longest: list = []  # In case of more than 1 largest string
+    current_longest: list[tuple[str, str, str]] = []  # In case of more than 1 largest string
     length_of_current_longest: int = 0
 
     for date_time_messg in categorised_data_key:
@@ -183,7 +204,7 @@ def longest_message_calculate(categorised_data_key: list) -> list:
     return current_longest
 
 
-def sum_of_words(categorised_data_key: list) -> int:
+def sum_of_words(categorised_data_key: list[tuple[str, str, str]]) -> int:
     """
     Sum of all words from a list of string
     """
@@ -195,7 +216,7 @@ def sum_of_words(categorised_data_key: list) -> int:
     return total_words
 
 
-def sum_of_char(categorised_data_key: list) -> int:
+def sum_of_char(categorised_data_key: list[tuple[str, str, str]]) -> int:
     """
     Sum of all chars from a list of string
     """
@@ -208,20 +229,20 @@ def sum_of_char(categorised_data_key: list) -> int:
     return total_char
 
 
-def list_of_words(categorised_data_key: list) -> list:
+def list_of_words(categorised_data_key: list[tuple[str, str, str]]) -> list[str]:
     """
     Make list of words from list of string
     Returns list of words
     """
 
-    word_list: list = []
+    word_list: list[str] = []
     for date_time_messg in categorised_data_key:
         messg: str = date_time_messg[2]
         word_list += re.findall(RE_FOR_ALL_WORDS, messg)  # Finds all the words in the string
     return word_list
 
 
-def clean_word_list(word_lst: list) -> dict:
+def clean_word_list(word_lst: list[str]) -> dict[str, int]:
     """
     Uses output of list_of_words()
     Remove all repeated occurrences in a word list
@@ -230,7 +251,7 @@ def clean_word_list(word_lst: list) -> dict:
     Assumption, words made of alphabets from any script
     """
 
-    word_dict: dict = {}
+    word_dict: dict[str, int] = {}
 
     for word in word_lst:
         if any(not chars_in_word.isalpha() for chars_in_word in word):  # Checks if any non-alphabet present
@@ -240,7 +261,7 @@ def clean_word_list(word_lst: list) -> dict:
     return word_dict
 
 
-def notif_data(categorised_data_key: list) -> dict:
+def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no more detail as values of different types
     """
     It goes through non-user messages and makes the data clearer
 

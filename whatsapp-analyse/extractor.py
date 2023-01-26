@@ -1,7 +1,7 @@
 """
 Here functions take in exported data from whatsapp and then makes it into Python object
 
-Data is a dict with key:value as -> name_of_person:(list of tuple -> (date, time, message)
+Data is a dict with key:value as -> name_of_person:list of tuple -> (date, time, message)
 
 Below need to be taken into consideration:
 For android the messages are in format -> 11/08/22, 11:50 am - Ayash Rath: Hi!
@@ -10,11 +10,8 @@ Note - The above are called by me "message records"
 
 And the time can be in either 12 hr or 24 hr format
 
-The date can be in US or UK format -> This is no something we are concerned with as for some chats, we may not be able
-to determine the format at all due to insufficient data and there is no obvious indicator for it except the fact that
-date can be more than 12.
-
-NOTE - Right now only android, with 12 hr format and uk date format is taken into consideration
+The date can be in US or UK format -> Ignored, as here we don't aim to do anything on the dates, so format they are
+in becomes irrelevant
 """
 
 import re
@@ -23,17 +20,25 @@ import sys
 
 # Regular expressions to detect if the string is start of a message record or a part of a message record
 # Date section is right for both UK and US date formats
-RE_DETECT_MESSG_ANDROID_12HR: str = (r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
-                                     r"([0-9]|1[0-2]):([0-5]["r"0-9]) ([ap]m) - ")
-RE_DETECT_MESSG_ANDROID_24HR: str = (r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
-                                     r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]) - ")
-RE_DETECT_MESSG_IOS_12HR: str = (r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
-                                 r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]) ([AP]M)\]")
-RE_DETECT_MESSG_IOS_24HR: str = (r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
-                                 r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\]")
+RE_DETECT_MESSG_ANDROID_12HR: str = (
+    r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-2]):([0-5]["r"0-9]) ([ap]m) - "
+)
+RE_DETECT_MESSG_ANDROID_24HR: str = (
+    r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]) - "
+)
+RE_DETECT_MESSG_IOS_12HR: str = (
+    r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]) ([AP]M)\]"
+)
+RE_DETECT_MESSG_IOS_24HR: str = (
+    r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\]"
+)
 
 
-def data_format_android(path: str) -> tuple:
+def data_format_android(path: str) -> tuple[bool, bool]:
     """
     It goes through the file in path it is passed and returns data format which will be needed later for extraction
     It returns -> True if android else false, which means iOS as the 2 possible options is Android and iOS
@@ -58,7 +63,7 @@ def data_format_android(path: str) -> tuple:
     return android_data_format, time_format_12_hr
 
 
-def extract_data(path: str, is_android: bool, is_12_hr: bool) -> list:
+def extract_data(path: str, is_android: bool, is_12_hr: bool) -> list[str]:
     """
     Opens file and formats the data in a way for processing to take place
     It takes path of file and returns a list of messgs with all info intact (date, time, messg, messg sender)
@@ -91,7 +96,7 @@ def extract_data(path: str, is_android: bool, is_12_hr: bool) -> list:
     return message_lst
 
 
-def get_name_from_name_plus_messg(line: str) -> tuple:
+def get_name_from_name_plus_messg(line: str) -> tuple[str, str]:
     """
     Divides a message into name_of_sender and message if the message is in the following form
     (i.e, date and time information has been removed, i.e, clean_extracted_data's return data's element):
@@ -100,8 +105,8 @@ def get_name_from_name_plus_messg(line: str) -> tuple:
 
     pos_of_colon: int = line.find(":")
     if pos_of_colon != -1:  # For non-user messages like description changed there is no colon used, so we get -1
-        name: str = line[0:pos_of_colon]
-        message: str = line[pos_of_colon + 2:]  # it is +2 instead of +1 as after : there is a space in the data
+        name = line[0:pos_of_colon]
+        message = line[pos_of_colon + 2:]  # it is +2 instead of +1 as after : there is a space in the data
 
         return name, message
 
@@ -111,13 +116,13 @@ def get_name_from_name_plus_messg(line: str) -> tuple:
     return name, message
 
 
-def categorise_data(extracted_data: list, is_android: bool) -> dict:
+def categorise_data(extracted_data: list, is_android: bool) -> dict[str, list[tuple[str, str, str]]]:
     """
     categorise the data into dict with key:value as -> name: list of tuple -> (date, time, messg)
     No specific functions to retrieve date and time from a line of message as they are simpler to obtain than name
     """
 
-    main_dict: dict = {}
+    main_dict: dict[str, list[tuple[str, str, str]]] = {}
 
     for messg in extracted_data:  # Right now the below if for android, 12 hr (note, names may have '-')
         if is_android:
@@ -130,7 +135,7 @@ def categorise_data(extracted_data: list, is_android: bool) -> dict:
         else:
             messg_split = messg.split(", ")  # Divides date and time+sender+message
             date = messg.split(", ")[0][1:]  # Removes [
-            time = messg_split[1].split("]")[0]  # Divides time+sender+message to time and others and stores it
+            time = messg_split[1].split("]")[0]  # Divides time + sender + message to time and others and stores it
             messg_plus_person = messg_split[1].split("]")[1].lstrip()  # Removes time and adds rest
             name, messg = get_name_from_name_plus_messg(messg_plus_person)
             main_dict[name] = main_dict.get(name, []) + [(date, time, messg)]

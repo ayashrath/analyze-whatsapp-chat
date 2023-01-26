@@ -136,5 +136,5 @@ For basic individual member's analysis (example.txt can be found in repo's root 
   - Full analysis report return
 - improved word list flag
 - better data and scripts for testing
-- Time of 1st and last message -> should be added in default and total
-- Also totally inactive member list
+- Also, totally inactive member list
+- Remove type hints in build.py
