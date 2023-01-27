@@ -1,7 +1,7 @@
 """
 these are functions which do the operations needed by the functions in flags.py
 
-categorised_data_key -> list of tuple -> (date, time, message)
+categorised_data_key  - (date, time, message)
 """
 
 import re
@@ -296,8 +296,8 @@ def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no 
             temp_get_data[0] += 1
             temp_get_data[1] += [date]
             data["Group Video Call"][1][person_name] = temp_get_data
-
             data["Group Video Call"][0] += 1
+
         elif SEARCH_TERM_GRP_ICON_CHANGE in messg:
             person_name = messg.split(SEARCH_TERM_GRP_ICON_CHANGE)[0]
 
@@ -305,8 +305,8 @@ def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no 
             temp_get_data[0] += 1
             temp_get_data[1] += [date]
             data["Group Icon Change"][1][person_name] = temp_get_data
-
             data["Group Icon Change"][0] += 1
+
         elif SEARCH_TERM_GRP_DESC_CHANGE in messg:
             person_name = messg.split(SEARCH_TERM_GRP_DESC_CHANGE)[0]
 
@@ -314,30 +314,39 @@ def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no 
             temp_get_data[0] += 1
             temp_get_data[1] += [date]
             data["Group Description Change"][1][person_name] = temp_get_data
-
             data["Group Description Change"][0] += 1
+
         elif SEARCH_TERM_GRP_NAME_CHANGE in messg:
             name_changer: str = messg.split(SEARCH_TERM_GRP_NAME_CHANGE)[0].strip()
-            data["Group Name"].append((date, name_changer, messg.split(SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME)[-1]))
+            data["Group Name"].append(
+                (date, name_changer, messg.split(SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME)[-1].strip())
+            )
+
         elif SEARCH_TERM_GRP_MEMBER_ADD in messg:
             split_message: list = messg.split(SEARCH_TERM_GRP_MEMBER_ADD)
             new_member_name: str = split_message[1].strip().capitalize()  # To capitalize Y in "you" if it is = "you"
             who_added_member: str = split_message[0].strip()
             data["Member Add"] += [(new_member_name, who_added_member, date)]
+
         elif SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK in messg:
             new_member_name = messg.split(SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK)[0].strip()
             who_added_member = "Joined by link"
             data["Member Add"] += [(new_member_name, who_added_member, date)]
+
         elif SEARCH_TERM_GRP_MEMBER_LEFT in messg:
             person_name_who_left: str = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
             removed_by: str = "themselves"
             data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
+
         elif SEARCH_TERM_GRP_MEMBER_REMOVED in messg:
             person_name_who_left = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[1].strip()
             removed_by = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
             data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
+
         elif SEARCH_TERM_GRP_CREATOR in messg:
             data["Group Creator"] = messg.split(SPLIT_TERM_GRP_CREATOR_NAME)[0].strip()
-            data["Group Name"].append((date, data["Group Creator"], messg.split(SPLIT_TERM_GRP_CREATOR_GRP_NAME)[-1]))
+            data["Group Name"].append(
+                (date, data["Group Creator"], messg.split(SPLIT_TERM_GRP_CREATOR_GRP_NAME)[-1].strip())
+            )
 
     return data

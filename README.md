@@ -13,9 +13,10 @@
 
 ## Description
 
-whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is procedurally programmed in Python.  
+whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is written with Python, without any user-defined classes. 
 
-It works on the data that is present on your phone, i.e., this tool can't analyse messages that have been cleared from history, and it can't analyse data which may appear on your phone but not present in the exported txt file, like group descriptions
+It works on the data that is present on your phone, i.e., this tool can't analyse messages that have been cleared from history, and it can't analyse data which may appear on your phone but not present in the exported txt file, like group descriptions.
+And also members who don't have any chat entries in the exported .txt file, can't be recognised
 
 ## INSTALLATION
 
@@ -53,11 +54,11 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
     $ whatsapp-analyse --help 
 
     usage: whatsapp_analyse.py [-h] [-n] [-t] [-ll] [-l] [-w] path
-
-    Tool to analyse a WhatsApp Chat Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices
+    
+    Tool to analyse a WhatsApp Chat. Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices
     
     positional arguments:
-    path                Path of Exported Text File of Chat
+      path                Path of Exported Text File of Chat
     
     options:
       -h, --help          show this help message and exit
@@ -66,46 +67,57 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
       -ll, --list-link    Obtain data of links present in the chat)
       -l, --length        Obtain detailed results concerning length of message
       -w, --word-list     Obtain data on all words used, including how many times it was used and who used it
-
+    
 For basic individual member's analysis (example.txt can be found in repo's root directory):
 
     $ whatsapp-analyse example.txt
 
-    ---
-    R :
-    ---
-    No of messages sent in total =  2
-    No of messages deleted =  0
-    No of photos, videos, audio or GIFs sent =  0
-    No of link shared =  0
-    Number of words used =  3
-    Number of characters used =  11
-    Average length of words =  3.67 characters
-    Average length of messages =  1.5 words
+    _______________________________________________________
+    | # Overall analysis of member of chat individually - |
+    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+    Number of people in group currently = 3
     
-    ---
-    B :
-    ---
-    No of messages sent in total =  9
-    No of messages deleted =  1
-    No of photos, videos, audio or GIFs sent =  1
-    No of link shared =  0
-    Number of words used =  35
-    Number of characters used =  135
-    Average length of words =  3.86 characters
-    Average length of messages =  3.89 words
-
-    ---
-    K :
-    ---
-    No of messages sent in total =  1
-    No of messages deleted =  0
-    No of photos, videos, audio or GIFs sent =  0
-    No of link shared =  0
-    Number of words used =  6
-    Number of characters used =  13
-    Average length of words =  2.17 characters
-    Average length of messages =  6.0 words
+    ------
+    ## R :
+    ------
+    No of messages sent in total = 2
+    No of messages deleted = 0
+    No of photos, videos, audio or GIFs sent = 0
+    No of link shared = 0
+    Number of words used = 3
+    Number of characters used = 11
+    First message sent on = 24/02/22
+    Last message sent on = 26/02/22
+    Average length of words = 3.67 characters
+    Average length of messages = 1.5 words
+    
+    ------
+    ## B :
+    ------
+    No of messages sent in total = 9
+    No of messages deleted = 1
+    No of photos, videos, audio or GIFs sent = 1
+    No of link shared = 0
+    Number of words used = 35
+    Number of characters used = 135
+    First message sent on = 24/02/22
+    Last message sent on = 26/02/22
+    Average length of words = 3.86 characters
+    Average length of messages = 3.89 words
+    
+    ------
+    ## K :
+    ------
+    No of messages sent in total = 1
+    No of messages deleted = 0
+    No of photos, videos, audio or GIFs sent = 0
+    No of link shared = 0
+    Number of words used = 6
+    Number of characters used = 13
+    First message sent on = 26/02/22
+    Last message sent on = 26/02/22
+    Average length of words = 2.17 characters
+    Average length of messages = 6.0 words
     
     
     🎉🎉🎉 Done!
@@ -126,15 +138,14 @@ For basic individual member's analysis (example.txt can be found in repo's root 
 
 ## Features to add / Bugs to solve
 
-- New flags
-  - emoji count
-  - poll data analysis
-  - graphical analysis
-  - date and time analysis
-    - most active date
-    - time analysis
-  - Full analysis report return
-- improved word list flag
-- better data and scripts for testing
-- Also, totally inactive member list
-- Remove type hints in build.py
+- New flags, that are planned to be added
+  - Poll data analysis - Shows details of polls that were present on the group
+  - Graphical analysis - Gives graphical output of the analysis, on appropriate areas
+  - Date and time analysis - Makes use of the date and time data available
+  - Full analysis report return - Generates a full report in a single file, for sharing purposes
+- Emoji count: Gives a count of emojis in default and total flags
+- Improve word list - By making the output more approachable and adding more analysed data
+- Better data and scripts for testing - As currently there is no proper way for the program to be tested for validity
+- Improve build.py
+  - Remove inline comments (as the program is already removing other type of comments, so these should also get removed for uniformity)
+  - Remove type hints (as some of its features only work in later versions, so some older versions can't execute the final script)

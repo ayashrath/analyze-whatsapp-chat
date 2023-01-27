@@ -117,4 +117,5 @@ else:
     if word_list_needed:
         flags.word_list_flag(categorised_data)
 
+print()
 print("🎉🎉🎉 Done!")
