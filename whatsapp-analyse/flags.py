@@ -3,7 +3,6 @@ These are the output and processing for all the flags
 It also has functions which dictate how the values are printed out
 """
 
-import json
 import operations
 
 
@@ -58,15 +57,19 @@ def default_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> Non
         print("Number of people in group currently = " + int_comma_sep(no_of_people_in_chat_currently))
         print()
 
+    person: str
     for person in categorised_data:
         if person == "Notification":  # As we don't want any non-user stuff here
             continue
 
-        person_data: list[tuple[str, str, str]] = categorised_data[person]
-        counts = operations.get_media_deleted_link_count(person_data)
-        no_words = operations.sum_of_words(person_data)
-        no_chars = operations.sum_of_char(person_data)
-        oldest_messg_plus_newest_tuple = operations.get_first_and_last_date_ordered_list(person_data)
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        counts: tuple[int, int, int] = operations.get_media_deleted_link_count(person_data)
+        no_chars: int = operations.sum_of_char(person_data)
+        no_words: int = operations.sum_of_words(person_data)
+        no_of_unique_words: int = len(operations.clean_word_list(operations.list_of_words(person_data)))
+        oldest_messg_plus_newest_tuple: tuple[str, str] = operations.get_first_and_last_date_ordered_list(person_data)
 
         print("-" * len(person) + "-----")
         print("##", person, ":")
@@ -75,15 +78,16 @@ def default_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> Non
         print("No of messages deleted =", int_comma_sep(counts[1]))
         print("No of photos, videos, audio or GIFs sent =", int_comma_sep(counts[0]))
         print("No of link shared =", int_comma_sep(counts[2]))
-        print("Number of words used =", int_comma_sep(no_words))
         print("Number of characters used =", int_comma_sep(no_chars))
-        print("First message sent on =", oldest_messg_plus_newest_tuple[0])
-        print("Last message sent on =", oldest_messg_plus_newest_tuple[1])
+        print("Number of words used =", int_comma_sep(no_words))
+        print("Number of unique words used = ", int_comma_sep(no_of_unique_words))
         try:
             print("Average length of words =", int_comma_sep(no_chars/no_words), "characters")
         except ZeroDivisionError:
             print("Average length of words = infinite characters")
         print("Average length of messages =", int_comma_sep(no_words/len(person_data)), "words")
+        print("First message sent on =", oldest_messg_plus_newest_tuple[0])
+        print("Last message sent on =", oldest_messg_plus_newest_tuple[1])
         print()
 
 
@@ -99,14 +103,20 @@ def total_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
 
     # The processes
     #
-    total_messages: int = 0  # Counter Variable
+    total_messages: int = 0  # Counter Variables
     total_deleted: int = 0
     total_no_media: int = 0
     total_link_shared: int = 0
-    total_words: int = 0
     total_chars: int = 0
+    total_words: int = 0
 
+    total_word_list: list[str] = []
+
+    person: str
     for person in categorised_data:
+        if person == "Notification":  # As we don't want any non-user stuff here
+            continue
+
         person_data: list = categorised_data[person]
         counts: tuple = operations.get_media_deleted_link_count(person_data)
         no_words: int = operations.sum_of_words(person_data)
@@ -116,8 +126,12 @@ def total_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
         total_deleted += counts[1]
         total_no_media += counts[0]
         total_link_shared += counts[2]
-        total_words += no_words
         total_chars += no_chars
+        total_words += no_words
+
+        total_word_list += operations.list_of_words(person_data)
+
+    total_word_list = operations.clean_word_list(total_word_list)
 
     print("----------")
     print("## Total :")
@@ -126,8 +140,9 @@ def total_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
     print("No of messages deleted =", int_comma_sep(total_deleted))
     print("No of photos, videos, audio or GIFs sent =", int_comma_sep(total_no_media))
     print("No of link shared =", int_comma_sep(total_link_shared))
-    print("Number of words used =", int_comma_sep(total_words))
     print("Number of characters used =", int_comma_sep(total_chars))
+    print("Number of words used =", int_comma_sep(total_words))
+    print("Number of unique words used = ", int_comma_sep(len(total_word_list)))
     print("Average length of words =", int_comma_sep(total_chars/total_words), "characters")
     print("Average length of messages =", int_comma_sep(total_words/total_messages), "words")
     print()
@@ -145,18 +160,38 @@ def word_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> N
 
     # The processes
     #
-    word_list: list = []
+    person_word_dict: dict[str, list[str]] = {}
+    total_word_lst: list[str] = []
 
+    person: str
     for person in categorised_data:
-        person_data: list = categorised_data[person]
-        word_list += operations.list_of_words(person_data)
+        if person == "Notification":
+            continue
 
-    final_dict: dict = operations.clean_word_list(word_list)
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+        words_used_by_person: list[str] = operations.list_of_words(person_data)
+        person_word_dict[person] = operations.clean_word_list(words_used_by_person)
+
+        total_word_lst += words_used_by_person
+
+    final_dict: dict = operations.person_lst_of_word_to_word_lst_of_people(person_word_dict)
+    final_dict = dict(sorted(final_dict.items()))  # Sort by alphabetic order
+    final_count_dict: dict[str, int] = operations.get_word_count(total_word_lst)
 
     print("----------------------------")
     print("## Word List (" + int_comma_sep(len(final_dict)) + " words) :")
     print("----------------------------")
-    print(json.dumps(final_dict, sort_keys=True, indent=4, ensure_ascii=False))  # To beautify the output, utf-8 allowed
+    counter = 1
+    for word in final_dict:
+        count_str: str = int_comma_sep(final_count_dict[word])
+        if count_str == "1":
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " time by "
+                  + str_lst_to_str(final_dict[word]))
+        else:
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " times by "
+                  + str_lst_to_str(final_dict[word]))
+        counter += 1
     print()
 
 
@@ -175,16 +210,18 @@ def link_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> N
     total_link_lst: list = []
     counter: int
 
+    person: str
     for person in categorised_data:
         if person == "Notification":  # As we don't want any non-user stuff here
             continue
 
+        person_data: list[tuple[str, str, str]]
         person_data = categorised_data[person]
         needed_lst: list = operations.get_link_list(person_data)
         if needed_lst:
             total_link_lst += needed_lst
 
-        cleaned_dict: dict = operations.clean_sorted_link_dict(operations.count_link_list(needed_lst))
+        cleaned_dict: dict[str, list[str]] = operations.clean_sorted_link_dict(operations.count_link_list(needed_lst))
 
         if not needed_lst:
             print("-" * len(person) + "-----")
@@ -204,7 +241,8 @@ def link_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> N
                 print()
         print()
 
-    total_cleaned_dict: dict = operations.clean_sorted_link_dict(operations.count_link_list(total_link_lst))
+    total_cleaned_dict: dict[str, list[str]]
+    total_cleaned_dict = operations.clean_sorted_link_dict(operations.count_link_list(total_link_lst))
 
     print("---------------------")
     print("## Total (" + str(len(total_link_lst)) + " links) :")
@@ -237,7 +275,7 @@ def notif_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
     if not person_data:
         print("There are no notification data")
         return
-    data = operations.notif_data(person_data)
+    data: dict = operations.notif_data(person_data)
 
     # Below if-else is used to handle different cases, for example where there is no group icon change
     # print(), ordered by how important each of them are
@@ -327,6 +365,7 @@ def length_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None
     print("| # Analysis by length of messages - |")
     print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
 
+    person: str
     for person in categorised_data:
         if person == "Notification":  # As we don't want any non-user stuff here
             continue
@@ -354,7 +393,9 @@ def length_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None
                 print("b. Time: " + messg[1])
                 print("c. Message: \n \"" + messg[2].rstrip(), '"', sep="")
 
-    longest_total_details: list[tuple[str, str, str]] = operations.longest_message_calculate(individual_longest_messg)
+    longest_total_details: list[tuple[str, str, str]]
+    longest_total_details = operations.longest_message_calculate(individual_longest_messg)
+
     result_for_longest: list = []
 
     for person in individual_longest_with_person:

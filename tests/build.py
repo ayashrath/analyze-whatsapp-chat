@@ -6,7 +6,7 @@ for purpose of creating an executable
 import sys
 
 
-FILE_LST: list = [
+FILE_LST: list[str] = [
     "../whatsapp-analyse/extractor.py",
     "../whatsapp-analyse/operations.py",
     "../whatsapp-analyse/flags.py",
@@ -14,11 +14,12 @@ FILE_LST: list = [
 ]  # in order of dependence
 # (i.e, the 1st one is one which doesn't depend on others, next one either is also the same or depends on previous)
 
-MODULES_LST: list = [
+MODULES_LST: list[str] = [
     "re",
     "sys",
     "json",
     "argparse",
+    "time",
 ]  # These are the modules needed by the project
 
 BUILD_ON_UNIX_SYSTEM: bool = True  # Used as unix based use '/' in file path while windows uses '\'

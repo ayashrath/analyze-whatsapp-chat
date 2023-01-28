@@ -6,23 +6,22 @@ categorised_data_key  - (date, time, message)
 
 import re
 
-
 # Used in stuff handling of links
 #
 STRINGS_USED_TO_IDENTIFY_LINKS: list[str] = ["http", ".com", ".org"]  # http also matches https
 TOP_SITES: dict[str, list[str]] = {
-        "YouTube": ["youtube.", "youtu.be"],
-        "Google": ["google.", "goog.le", "g.co"],
-        "Wikipedia": ["wikipedia."],
-        "Meta's Sites": ["facebook.com", "fb.com", "instagram.com", "instagr.am", "whatsapp.com"],
-        "Reddit": ["reddit.com"],
-        "Twitter": ["twitter.com"],
-        "Amazon": ["amazon."],
-        "Yandex": ["yandex.ru"],
-        "TicTok": ["tiktok."],
-        "Bilibili": ["bilibili.com"],
-        "News": ["cnn.com", "bbc.", "msn.com"],
-    }  # ending with . for some sites as, sites like YouTube have multiple domain names
+    "YouTube": ["youtube.", "youtu.be"],
+    "Google": ["google.", "goog.le", "g.co"],
+    "Wikipedia": ["wikipedia."],
+    "Meta's Sites": ["facebook.com", "fb.com", "instagram.com", "instagr.am", "whatsapp.com"],
+    "Reddit": ["reddit.com"],
+    "Twitter": ["twitter.com"],
+    "Amazon": ["amazon."],
+    "Yandex": ["yandex.ru"],
+    "TicTok": ["tiktok."],
+    "Bilibili": ["bilibili.com"],
+    "News": ["cnn.com", "bbc.", "msn.com"],
+}  # ending with . for some sites as, sites like YouTube have multiple domain names
 
 # Special Messages that indicate if media was there in the message, message was deleted
 #
@@ -106,7 +105,8 @@ def count_link_list(link_lst: list[str]) -> dict[str, list[str]]:
     Uses top sites that people are most probably going to share
     """
 
-    output_dict: dict[str, list[str]] = {}
+    output_dict: dict[str, list[str]]
+    output_dict = {}
 
     for link in link_lst:
         site_added: bool = False
@@ -131,7 +131,9 @@ def clean_sorted_link_dict(sorted_link_dict: dict[str, list[str]]) -> dict[str, 
     It would be easy to remove everything after '?' but then this may break some links
     example - YouTube needs watch?v= to access the video
     """
-    output_dict: dict[str, list[str]] = {}
+
+    output_dict: dict[str, list[str]]
+    output_dict = {}
 
     for site in sorted_link_dict:
         link_lst = sorted_link_dict[site]
@@ -164,7 +166,7 @@ def get_media_deleted_link_count(categorised_data_key: list[tuple[str, str, str]
     Get count of media, message deleted, links
     """
 
-    media_counter: int = 0    # Counter variables
+    media_counter: int = 0  # Counter variables
     deleted_counter: int = 0
     link_counter: int = 0
 
@@ -188,7 +190,8 @@ def longest_message_calculate(categorised_data_key: list[tuple[str, str, str]]) 
     If 2 or more strings have the same length and are the longest - this still works
     """
 
-    current_longest: list[tuple[str, str, str]] = []  # In case of more than 1 largest string
+    current_longest: list[tuple[str, str, str]]
+    current_longest = []  # In case of more than 1 largest string
     length_of_current_longest: int = 0
 
     for date_time_messg in categorised_data_key:
@@ -232,17 +235,34 @@ def sum_of_char(categorised_data_key: list[tuple[str, str, str]]) -> int:
 def list_of_words(categorised_data_key: list[tuple[str, str, str]]) -> list[str]:
     """
     Make list of words from list of string
+    It removes links from message string before extracting words in the message
+    It also skips special messages like <media omitted> as they should not be used in the word count
     Returns list of words
     """
 
+    link_list: list[str] = get_link_list(categorised_data_key)
     word_list: list[str] = []
     for date_time_messg in categorised_data_key:
         messg: str = date_time_messg[2]
-        word_list += re.findall(RE_FOR_ALL_WORDS, messg)  # Finds all the words in the string
+
+        if messg in [STRING_USED_IN_PLACE_OF_MEDIA, STRING_USED_IN_PLACE_OF_DELETED_MESSG,
+                     STRING_USED_IN_PLACE_OF_YOUR_DELETED_MESSG]:
+            continue
+
+        links_in_messg: list[str] = []
+        for phrase in messg.split():
+            if phrase in link_list:
+                links_in_messg += [phrase]
+
+        for link in links_in_messg:
+            messg = messg.split(link)[-1]
+
+        words_found: list[str] = re.findall(RE_FOR_ALL_WORDS, messg)  # Finds all the words in the string
+        word_list += words_found
     return word_list
 
 
-def clean_word_list(word_lst: list[str]) -> dict[str, int]:
+def clean_word_list(word_lst: list[str]) -> list[str]:
     """
     Uses output of list_of_words()
     Remove all repeated occurrences in a word list
@@ -250,6 +270,27 @@ def clean_word_list(word_lst: list[str]) -> dict[str, int]:
 
     Assumption, words made of alphabets from any script
     """
+
+    unique_word_lst: list[str] = []
+
+    for word in word_lst:
+        if any(not chars_in_word.isalpha() for chars_in_word in word):  # Checks if any non-alphabet present
+            continue
+        if word.lower() not in unique_word_lst:
+            unique_word_lst += [word.lower()]
+
+    return unique_word_lst
+
+
+def get_word_count(word_lst: list[str]) -> dict[str, int]:
+    """
+        Uses output of list_of_words()
+        Remove all repeated occurrences in a word list
+        Clears out links and special messages like - <media omitted>
+        Returns a dictionary with format - word : count
+
+        returns dict with key:value -> word:count
+        """
 
     word_dict: dict[str, int] = {}
 
@@ -259,6 +300,20 @@ def clean_word_list(word_lst: list[str]) -> dict[str, int]:
         word_dict[word.lower()] = word_dict.get(word.lower(), 0) + 1
 
     return word_dict
+
+
+def person_lst_of_word_to_word_lst_of_people(person_lst_of_word: dict[str, list[str]]) -> dict[str, list[str]]:
+    """
+    The aim of it is to convert dictionary of format - person: list_of unique_words, to the following:
+        unique_word:list_of_people_who_used_it
+    """
+    return_dict: dict[str, list[str]] = {}
+
+    for person in person_lst_of_word:
+        for word in person_lst_of_word[person]:
+            return_dict[word] = return_dict.get(word, []) + [person]
+
+    return return_dict
 
 
 def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no more detail as values of different types
@@ -324,8 +379,8 @@ def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no 
 
         elif SEARCH_TERM_GRP_MEMBER_ADD in messg:
             split_message: list = messg.split(SEARCH_TERM_GRP_MEMBER_ADD)
-            new_member_name: str = split_message[1].strip().capitalize()  # To capitalize Y in "you" if it is = "you"
             who_added_member: str = split_message[0].strip()
+            new_member_name: str = split_message[1].strip().capitalize()  # To capitalize Y in "you" if it is = "you"
             data["Member Add"] += [(new_member_name, who_added_member, date)]
 
         elif SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK in messg:
@@ -339,8 +394,8 @@ def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no 
             data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
 
         elif SEARCH_TERM_GRP_MEMBER_REMOVED in messg:
-            person_name_who_left = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[1].strip()
-            removed_by = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
+            removed_by = messg.split(SEARCH_TERM_GRP_MEMBER_REMOVED)[0].strip()
+            person_name_who_left = messg.split(SEARCH_TERM_GRP_MEMBER_REMOVED)[1].strip()
             data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
 
         elif SEARCH_TERM_GRP_CREATOR in messg:

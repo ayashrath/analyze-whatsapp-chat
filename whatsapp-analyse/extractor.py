@@ -72,7 +72,7 @@ def extract_data(path: str, is_android: bool, is_12_hr: bool) -> list[str]:
 
     try:
         with open(path, encoding="utf-8") as file_handle:
-            message_lst: list = []
+            message_lst: list[str] = []
             if is_android and is_12_hr:
                 re_to_use: str = RE_DETECT_MESSG_ANDROID_12HR
             elif is_android and not is_12_hr:
@@ -116,17 +116,18 @@ def get_name_from_name_plus_messg(line: str) -> tuple[str, str]:
     return name, message
 
 
-def categorise_data(extracted_data: list, is_android: bool) -> dict[str, list[tuple[str, str, str]]]:
+def categorise_data(extracted_data: list[str], is_android: bool) -> dict[str, list[tuple[str, str, str]]]:
     """
     categorise the data into dict with key:value as -> name: list of tuple -> (date, time, messg)
     No specific functions to retrieve date and time from a line of message as they are simpler to obtain than name
     """
 
-    main_dict: dict[str, list[tuple[str, str, str]]] = {}
+    main_dict: dict[str, list[tuple[str, str, str]]]
+    main_dict = {}
 
     for messg in extracted_data:  # Right now the below if for android, 12 hr (note, names may have '-')
         if is_android:
-            messg_split: str = messg.split(", ")  # Divides date and time+sender+message
+            messg_split: list[str] = messg.split(", ")  # Divides date and time+sender+message
             date: str = messg.split(", ")[0]
             time: str = messg_split[1].split("-")[0].rstrip()  # Divides time+sender+message to time and stores it
             messg_plus_person: str = messg[20:].lstrip()  # Using left-strip and fact len(max date + time) = 19/20

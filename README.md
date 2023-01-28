@@ -8,15 +8,13 @@
 - [Installation](#installation)
 - [Extract Data](#extract-data)
 - [Usage](#usage)
+- [Limitations](#limitations)
 - [Building](#building)
 - [Features to be added and Known Bugs](#features-to-add--bugs-to-solve)
-
 ## Description
 
-whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires python3 to work and will work in all major operating systems. It is written with Python, without any user-defined classes. 
-
-It works on the data that is present on your phone, i.e., this tool can't analyse messages that have been cleared from history, and it can't analyse data which may appear on your phone but not present in the exported txt file, like group descriptions.
-And also members who don't have any chat entries in the exported .txt file, can't be recognised
+whatsapp-analyse is a command-line program, to analyse personal or group WhatsApp chats. It requires Python3 to work and will work in all major operating systems.  
+It is written procedurally with Python, i.e, without any user-defined classes.
 
 ## INSTALLATION
 
@@ -122,6 +120,12 @@ For basic individual member's analysis (example.txt can be found in repo's root 
     
     🎉🎉🎉 Done!
 
+## Limitations
+
+- Required a mobile device, to export data
+- It works only the data available by exporting data of chat from the mobile app, i.e., it will not work on the chat that has been cleared by the person exporting the chat
+- It can't analyse data which may appear on your phone but not present in the exported txt file. For example - in the app we can see all the members present in the group, but here we can get list of all members who have their chat in the exported .txt file
+
 ## Building
 
 ### To make a single executable from project files
@@ -144,7 +148,7 @@ For basic individual member's analysis (example.txt can be found in repo's root 
   - Date and time analysis - Makes use of the date and time data available
   - Full analysis report return - Generates a full report in a single file, for sharing purposes
 - Emoji count: Gives a count of emojis in default and total flags
-- Improve word list - By making the output more approachable and adding more analysed data
+- Improve word list - User inputs the amount of details he requires, 3 levels - simple list, list with counter, all
 - Better data and scripts for testing - As currently there is no proper way for the program to be tested for validity
 - Improve build.py
   - Remove inline comments (as the program is already removing other type of comments, so these should also get removed for uniformity)

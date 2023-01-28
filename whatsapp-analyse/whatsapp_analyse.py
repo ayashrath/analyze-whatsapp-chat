@@ -3,6 +3,7 @@ This is where the argparse part of code is
 And here data extracted using functions of extractor.py is got and feeds into flags.py depending on user request
 """
 
+import time
 import argparse
 import extractor
 import flags
@@ -75,6 +76,7 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
 
 # Here the input in cli is put into variables
 #
+start_time: float = time.time()
 input_from_user = cli_implementation()
 path: str = input_from_user["path"]
 total_summary_needed: bool = input_from_user["total_bool"]
@@ -83,9 +85,11 @@ word_list_needed: bool = input_from_user["word_list_bool"]
 notification_needed: bool = input_from_user["notification_bool"]
 link_list_needed: bool = input_from_user["link_list_bool"]
 
-format_bool_tuple = extractor.data_format_android(path)
-extracted_data = extractor.extract_data(path, format_bool_tuple[0], format_bool_tuple[1])
-categorised_data = extractor.categorise_data(extracted_data, format_bool_tuple[0])
+format_bool_tup: tuple[bool, bool] = extractor.data_format_android(path)
+extracted_data: list[str] = extractor.extract_data(path, format_bool_tup[0], format_bool_tup[1])
+
+categorised_data: dict[str, list[tuple[str, str, str]]]
+categorised_data = extractor.categorise_data(extracted_data, format_bool_tup[0])
 
 
 # Here all the flag gets checked and accordingly functions are called
@@ -119,3 +123,4 @@ else:
 
 print()
 print("🎉🎉🎉 Done!")
+print("And it took only", round(time.time() - start_time, ndigits=2), "seconds")
