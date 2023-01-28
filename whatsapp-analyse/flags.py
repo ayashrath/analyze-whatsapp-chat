@@ -148,19 +148,69 @@ def total_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
     print()
 
 
-def word_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+def word_list_flag_simple(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
     """
-    Word Flag Handling
+    Word Flag Handling for value 1
     """
 
-    # The print statement to identify the output
-    print("______________________________________________")
-    print("| # Word list for all messages in the chat - |")
-    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+    total_word_lst: list[str] = []
+    for person in categorised_data:
+        if person == "Notification":
+            continue
 
-    # The processes
-    #
-    person_word_dict: dict[str, list[str]] = {}
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        total_word_lst += operations.list_of_words(person_data)
+
+    total_word_lst: list[str] = sorted(operations.clean_word_list(total_word_lst))  # Sort by alphabetic order
+
+    print("----------------------------")
+    print("## Word List (" + int_comma_sep(len(total_word_lst)) + " words) :")
+    print("----------------------------")
+    counter = 1
+    for word in total_word_lst:
+        print(str(counter) + ". \"" + word)
+        counter += 1
+
+
+def word_list_flag_with_counter(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Word Flag Handling for value 2
+    """
+
+    total_word_lst: list[str] = []
+    for person in categorised_data:
+        if person == "Notification":
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        total_word_lst += operations.list_of_words(person_data)
+
+    final_count_dict: dict[str, int] = operations.get_word_count(total_word_lst)  # Sort by alphabetic order
+
+    print("----------------------------")
+    print("## Word List (" + int_comma_sep(len(final_count_dict.keys())) + " words) :")
+    print("----------------------------")
+    counter = 1
+    for word in final_count_dict:
+        count_str: str = int_comma_sep(final_count_dict[word])
+        if count_str == "1":
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " time")
+        else:
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " times")
+        counter += 1
+
+
+def word_list_flag_with_counter_and_sender(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Word Flag Handling for value 3
+    """
+
+    person_word_dict: dict[str, list[str]]
+    person_word_dict = {}
     total_word_lst: list[str] = []
 
     person: str
@@ -192,6 +242,29 @@ def word_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> N
             print(str(counter) + ". \"" + word + "\" = used " + count_str + " times by "
                   + str_lst_to_str(final_dict[word]))
         counter += 1
+
+
+def word_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]], type_output: int) -> None:
+    """
+    Word Flag Handling - uses word_list_flag_simple, word_list_flag_with_counter, word_list_flag_with_counter_and_sender
+    """
+
+    # The print statement to identify the output
+    print("______________________________________________")
+    print("| # Word list for all messages in the chat - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # The processes
+    #
+    if type_output == 1:
+        word_list_flag_simple(categorised_data)
+
+    if type_output == 2:
+        word_list_flag_with_counter(categorised_data)
+
+    if type_output == 3:
+        word_list_flag_with_counter_and_sender(categorised_data)
+
     print()
 
 

@@ -31,7 +31,7 @@ STRING_USED_IN_PLACE_OF_YOUR_DELETED_MESSG: str = "You deleted this message"
 
 # REs
 #
-RE_FOR_ALL_WORDS: str = r'\w+'
+RE_FOR_ALL_WORDS: str = r'\w+'  # This is used instead of using split() and strip as this is more reliable
 
 # Used in notification flag - to find type of non-user message and sub-str to split message and find required info
 #

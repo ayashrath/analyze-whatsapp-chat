@@ -18,7 +18,7 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Tool to analyse a WhatsApp Chat. \n Please refer "
                     "https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on "
-                    "exporting chat on mobile devices"
+                    "procedure to export chat on a mobile device"
     )
 
     # Potion where all the arguments and flags of the CLI is listed and implemented
@@ -27,38 +27,40 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
         metavar="path",
         type=str,
         nargs=1,
-        help="Path of Exported Text File of Chat",
+        help="path of Exported Text File of Chat",
     )
     parser.add_argument(
         "-n",
         "--notification",
         action="store_true",
-        help="Obtain data on non-user messages (mainly in group chats) that occur in group chat, "
+        help="obtain data on non-user messages (specifically for group chats) that occur in group chat, "
              "like a group's icon was changed",
     )
     parser.add_argument(
         "-t",
         "--total",
         action="store_true",
-        help="Obtain data on the chat as a whole, in addition to data computed by default",
+        help="obtain data on the chat as a whole, in addition to data computed by default "
+             "(case where no flag has been used)",
     )
     parser.add_argument(
         "-ll",
         "--list-link",
         action="store_true",
-        help="Obtain data of links present in the chat)",
+        help="obtain categorised data of links present in the chat",
     )
     parser.add_argument(
         "-l",
         "--length",
         action="store_true",
-        help="Obtain detailed results concerning length of message",
+        help="obtain detailed results concerning length of message",
     )
     parser.add_argument(
         "-w",
         "--word-list",
-        action="store_true",
-        help="Obtain data on all words used, including how many times it was used and who used it",
+        type=int,
+        choices=[1, 2, 3],
+        help="obtain list of unique words used [1 for just the list, 2 for 1 + count, and 3 for 2 + sender name]",
     )
     arg: argparse.Namespace = parser.parse_args()
 
@@ -66,7 +68,7 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
         "path": arg.path[0],
         "total_bool": arg.total,
         "length_bool": arg.length,
-        "word_list_bool": arg.word_list,
+        "word_list_int": arg.word_list,
         "notification_bool": arg.notification,
         "link_list_bool": arg.list_link,
     }  # Holds the parsed data obtained from cli
@@ -81,7 +83,7 @@ input_from_user = cli_implementation()
 path: str = input_from_user["path"]
 total_summary_needed: bool = input_from_user["total_bool"]
 better_length_needed: bool = input_from_user["length_bool"]
-word_list_needed: bool = input_from_user["word_list_bool"]
+word_list_type: int = input_from_user["word_list_int"]
 notification_needed: bool = input_from_user["notification_bool"]
 link_list_needed: bool = input_from_user["link_list_bool"]
 
@@ -100,7 +102,7 @@ categorised_data = extractor.categorise_data(extracted_data, format_bool_tup[0])
 default_case_checker: bool = (
     not total_summary_needed
     and not better_length_needed
-    and not word_list_needed
+    and word_list_type is None
     and not notification_needed
     and not link_list_needed
 )
@@ -118,8 +120,8 @@ else:
         flags.link_list_flag(categorised_data)
     if better_length_needed:
         flags.length_flag(categorised_data)
-    if word_list_needed:
-        flags.word_list_flag(categorised_data)
+    if word_list_type is not None:
+        flags.word_list_flag(categorised_data, word_list_type)
 
 print()
 print("🎉🎉🎉 Done!")
