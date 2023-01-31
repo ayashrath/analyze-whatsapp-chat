@@ -22,15 +22,24 @@ def int_comma_sep(number: float) -> str:
 
 def str_lst_to_str(lst_to_be_printed: list[str]) -> str:
     """
-    Takes a short list of string like - ['11/08/22', '30/08/22']
-    And returns -> '11/08/22, 30/08/22'
+    Takes a short list of string like - ['11/08/22', '11/08/22', '30/08/22']
+    Converts into {'11/08/22': 2, '30/08/22': 1}
+    And returns -> '11/08/22 (x2), 30/08/22' (i.e, prints stuff only once and indicates number of repetitions if > 1)
     """
+
+    word_count: dict[str, int] = {}
+    for element in lst_to_be_printed:
+        word_count[element] = word_count.get(element, 0) + 1
 
     final_str: str = ""
 
-    for element in lst_to_be_printed[:-1]:
-        final_str += element + ", "
-    final_str += lst_to_be_printed[-1]  # To avoid string to end with ','
+    for word in word_count:
+        if word_count[word] == 1:
+            final_str += word + ", "
+        else:
+            final_str += word + " (x" + int_comma_sep(word_count[word]) + "), "
+
+    final_str = final_str.rstrip()[:-1]  # To avoid string to end with ','
 
     return final_str
 
@@ -163,7 +172,7 @@ def word_list_flag_simple(categorised_data: dict[str, list[tuple[str, str, str]]
 
         total_word_lst += operations.list_of_words(person_data)
 
-    total_word_lst: list[str] = sorted(operations.clean_word_list(total_word_lst))  # Sort by alphabetic order
+    total_word_lst = sorted(operations.clean_word_list(total_word_lst))  # Sort by alphabetic order
 
     print("----------------------------")
     print("## Word List (" + int_comma_sep(len(total_word_lst)) + " words) :")

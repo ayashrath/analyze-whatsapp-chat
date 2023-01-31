@@ -1,0 +1,1126 @@
+#!/usr/bin/env python3
+
+import re
+import sys
+import json
+import argparse
+import time
+
+
+
+RE_DETECT_MESSG_ANDROID_12HR: str = (
+    r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-2]):([0-5]["r"0-9]) ([ap]m) - "
+)
+RE_DETECT_MESSG_ANDROID_24HR: str = (
+    r"([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]) - "
+)
+RE_DETECT_MESSG_IOS_12HR: str = (
+    r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]) ([AP]M)\]"
+)
+RE_DETECT_MESSG_IOS_24HR: str = (
+    r"\[([0-2][0-9]|3[0-1])\/([0-2][0-9]|3[0-1])\/((20)?[1-9][0-9]), "
+    r"([0-9]|1[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])\]"
+)
+
+
+def data_format_android(path: str) -> tuple[bool, bool]:
+    """
+    It goes through the file in path it is passed and returns data format which will be needed later for extraction
+    It returns -> True if android else false, which means iOS as the 2 possible options is Android and iOS
+    """
+
+    android_data_format: bool = False  # There are 2 possible outcomes, iOS or Android
+    time_format_12_hr: bool = False  # There are 2 possible outcomes, 12-hr or 24-hr
+
+    try:
+        with open(path, encoding="utf-8") as file_handle:
+            line1 = file_handle.readline()  # 1st line is guaranteed to be start of a message
+            if line1[0] != "[":
+                android_data_format = True
+            for hr_12_checkers in [" AM] ", " PM] ", " am - ", " pm - "]:  # Not just 'am', etc; name may have 'am'/etc
+                if hr_12_checkers in line1[:25]:  # As max date+time < 25
+                    time_format_12_hr = True
+                    break
+    except FileNotFoundError:
+        print("File Not Found")
+        sys.exit()  # as pyinstaller doesn't understand quit()
+
+    return android_data_format, time_format_12_hr
+
+
+def extract_data(path: str, is_android: bool, is_12_hr: bool) -> list[str]:
+    """
+    Opens file and formats the data in a way for processing to take place
+    It takes path of file and returns a list of messgs with all info intact (date, time, messg, messg sender)
+    Note: some messages can have multiple lines so the code was not a simple for loop through the file
+    """
+
+    try:
+        with open(path, encoding="utf-8") as file_handle:
+            message_lst: list[str] = []
+            if is_android and is_12_hr:
+                re_to_use: str = RE_DETECT_MESSG_ANDROID_12HR
+            elif is_android and not is_12_hr:
+                re_to_use = RE_DETECT_MESSG_ANDROID_24HR
+            elif not is_android and is_12_hr:
+                re_to_use = RE_DETECT_MESSG_IOS_12HR
+            else:
+                re_to_use = RE_DETECT_MESSG_IOS_24HR
+
+            for line in file_handle:
+                check_if_new_message: bool = not re.search(re_to_use, line) is None
+                if check_if_new_message:
+                    message_lst.append(line)
+                else:
+                    len_lst: int = len(message_lst)
+                    message_lst[len_lst - 1] += line
+    except FileNotFoundError:
+        print("File Not Found")
+        sys.exit()  # as pyinstaller doesn't understand quit()
+
+    return message_lst
+
+
+def get_name_from_name_plus_messg(line: str) -> tuple[str, str]:
+    """
+    Divides a message into name_of_sender and message if the message is in the following form
+    (i.e, date and time information has been removed, i.e, clean_extracted_data's return data's element):
+        > \"Ayash: POLL:\nIs Pi ≈ \nOPTION: 3.14 (5 votes)\nOPTION: 4.15 (0 votes)\n\n\"
+    """
+
+    pos_of_colon: int = line.find(":")
+    if pos_of_colon != -1:  # For non-user messages like description changed there is no colon used, so we get -1
+        name = line[0:pos_of_colon]
+        message = line[pos_of_colon + 2:]  # it is +2 instead of +1 as after : there is a space in the data
+
+        return name, message
+
+    name = "Notification"
+    message = line
+
+    return name, message
+
+
+def categorise_data(extracted_data: list[str], is_android: bool) -> dict[str, list[tuple[str, str, str]]]:
+    """
+    categorise the data into dict with key:value as -> name: list of tuple -> (date, time, messg)
+    No specific functions to retrieve date and time from a line of message as they are simpler to obtain than name
+    """
+
+    main_dict: dict[str, list[tuple[str, str, str]]]
+    main_dict = {}
+
+    for messg in extracted_data:  # Right now the below if for android, 12 hr (note, names may have '-')
+        if is_android:
+            messg_split: list[str] = messg.split(", ")  # Divides date and time+sender+message
+            date: str = messg.split(", ")[0]
+            time: str = messg_split[1].split("-")[0].rstrip()  # Divides time+sender+message to time and stores it
+            messg_plus_person: str = messg[20:].lstrip()  # Using left-strip and fact len(max date + time) = 19/20
+            name, messg = get_name_from_name_plus_messg(messg_plus_person)
+            main_dict[name] = main_dict.get(name, []) + [(date, time, messg)]
+        else:
+            messg_split = messg.split(", ")  # Divides date and time+sender+message
+            date = messg.split(", ")[0][1:]  # Removes [
+            time = messg_split[1].split("]")[0]  # Divides time + sender + message to time and others and stores it
+            messg_plus_person = messg_split[1].split("]")[1].lstrip()  # Removes time and adds rest
+            name, messg = get_name_from_name_plus_messg(messg_plus_person)
+            main_dict[name] = main_dict.get(name, []) + [(date, time, messg)]
+
+    return main_dict
+
+
+STRINGS_USED_TO_IDENTIFY_LINKS: list[str] = ["http", ".com", ".org"]  # http also matches https
+TOP_SITES: dict[str, list[str]] = {
+    "YouTube": ["youtube.", "youtu.be"],
+    "Google": ["google.", "goog.le", "g.co"],
+    "Wikipedia": ["wikipedia."],
+    "Meta's Sites": ["facebook.com", "fb.com", "instagram.com", "instagr.am", "whatsapp.com"],
+    "Reddit": ["reddit.com"],
+    "Twitter": ["twitter.com"],
+    "Amazon": ["amazon."],
+    "Yandex": ["yandex.ru"],
+    "TicTok": ["tiktok."],
+    "Bilibili": ["bilibili.com"],
+    "News": ["cnn.com", "bbc.", "msn.com"],
+}  # ending with . for some sites as, sites like YouTube have multiple domain names
+
+STRING_USED_IN_PLACE_OF_MEDIA: str = "<Media omitted>"
+STRING_USED_IN_PLACE_OF_DELETED_MESSG: str = "This message was deleted"
+STRING_USED_IN_PLACE_OF_YOUR_DELETED_MESSG: str = "You deleted this message"
+
+RE_FOR_ALL_WORDS: str = r'\w+'  # This is used instead of using split() and strip as this is more reliable
+
+
+SEARCH_TERM_GRP_DESC_CHANGE: str = "changed the group description"
+SEARCH_TERM_GRP_VIDEO_CALL: str = "started a video call"
+SEARCH_TERM_GRP_ICON_CHANGE: str = "changed this group's icon"
+
+SEARCH_TERM_GRP_CREATOR: str = "created group"
+SPLIT_TERM_GRP_CREATOR_NAME: str = "created"
+SPLIT_TERM_GRP_CREATOR_GRP_NAME: str = "group"
+
+SEARCH_TERM_GRP_NAME_CHANGE: str = "changed the subject from"
+SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME: str = "to"
+
+SEARCH_TERM_GRP_MEMBER_ADD: str = "added"
+SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK: str = "joined using this group's invite link"
+
+SEARCH_TERM_GRP_MEMBER_REMOVED: str = "removed"
+SEARCH_TERM_GRP_MEMBER_LEFT: str = "left"
+
+
+def get_first_and_last_date_ordered_list(categorised_data_key: list[tuple[str, str, str]]) -> tuple[str, str]:
+    """
+    It returns the first and last entry from a list of tuple containing date, time and message
+    And it is ordered by date and time from oldest to earliest
+    """
+
+    oldest_date: str = categorised_data_key[0][0]
+    newest_date: str = categorised_data_key[-1][0]
+
+    return oldest_date, newest_date
+
+
+def get_link_list(categorised_data_key: list[tuple[str, str, str]]) -> list[str]:
+    """
+    Get list of links from categorised_data_key
+    Assumes that people don't write - text<link> with no whitespace in between
+    """
+
+    lst_of_links: list[str] = []
+
+    for date_time_messg in categorised_data_key:
+        messg = date_time_messg[2]
+        link_found: bool = False
+
+        for identifier in STRINGS_USED_TO_IDENTIFY_LINKS:
+            if link_found:
+                break  # If a link has both http and com it will give count of 2 so to prevent it
+            for word in messg.split():
+                if identifier in word:
+                    lst_of_links.append(word.strip())  # no break here as a single message may have > 1 link
+                link_found = True
+
+    return lst_of_links
+
+
+def count_link_list(link_lst: list[str]) -> dict[str, list[str]]:
+    """
+    Give count analysis of the link when list of links is passed through
+    Uses user_defined dict for categorisation
+    Uses top sites that people are most probably going to share
+    """
+
+    output_dict: dict[str, list[str]]
+    output_dict = {}
+
+    for link in link_lst:
+        site_added: bool = False
+        for site in TOP_SITES:
+            if site_added:
+                break
+            for identifier in TOP_SITES[site]:
+                if identifier in link and not site_added:
+                    output_dict[site] = output_dict.get(site, []) + [link]
+                    site_added = True
+                    break
+        if not site_added and link not in output_dict.get("Uncategorised", []):
+            output_dict["Uncategorised"] = output_dict.get("Uncategorised", []) + [link]
+
+    return output_dict
+
+
+def clean_sorted_link_dict(sorted_link_dict: dict[str, list[str]]) -> dict[str, list[str]]:
+    """
+    Clean links in sorted link dict -> output of get_link_list ()
+    It helps remove the parts of url for specific sites which are not important to access content
+    It would be easy to remove everything after '?' but then this may break some links
+    example - YouTube needs watch?v= to access the video
+    """
+
+    output_dict: dict[str, list[str]]
+    output_dict = {}
+
+    for site in sorted_link_dict:
+        link_lst = sorted_link_dict[site]
+        new_lst = []
+        for link in link_lst:
+            if site == "YouTube":
+                if "youtube.com/watch?v" in link:  # Add elif(s) for a new site that requires ? to function
+                    new_lst.append(link)
+                    break
+
+            pos_question_mark = link.find("?")
+
+            if pos_question_mark != -1:
+                link_to_add: str = link[:link.find("?")]
+            else:  # As if there is no ? then returns -1 which would remove the last char of link if above used
+                link_to_add = link
+
+            if link_to_add[-1] == "/":  # To remove '/' at end in links as '/' don't serve a purpose in a link
+                link_to_add = link_to_add[:-1]
+
+            new_lst.append(link_to_add)
+
+        output_dict[site] = new_lst
+
+    return output_dict
+
+
+def get_media_deleted_link_count(categorised_data_key: list[tuple[str, str, str]]) -> tuple[int, int, int]:
+    """
+    Get count of media, message deleted, links
+    """
+
+    media_counter: int = 0  # Counter variables
+    deleted_counter: int = 0
+    link_counter: int = 0
+
+    for date_time_messg in categorised_data_key:
+        messg = date_time_messg[2]
+        if STRING_USED_IN_PLACE_OF_MEDIA in messg:
+            media_counter += 1
+        elif STRING_USED_IN_PLACE_OF_DELETED_MESSG in messg:
+            deleted_counter += 1
+        elif STRING_USED_IN_PLACE_OF_YOUR_DELETED_MESSG in messg:
+            deleted_counter += 1
+        else:
+            link_counter = len(get_link_list(categorised_data_key))
+
+    return media_counter, deleted_counter, link_counter
+
+
+def longest_message_calculate(categorised_data_key: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    """
+    Gets the largest message by total chars
+    If 2 or more strings have the same length and are the longest - this still works
+    """
+
+    current_longest: list[tuple[str, str, str]]
+    current_longest = []  # In case of more than 1 largest string
+    length_of_current_longest: int = 0
+
+    for date_time_messg in categorised_data_key:
+        date: str = date_time_messg[0]
+        time: str = date_time_messg[1]
+        messg: str = date_time_messg[2]
+        if len(messg) > length_of_current_longest:
+            current_longest = [(date, time, messg)]
+            length_of_current_longest = len(messg)
+        elif len(messg) == length_of_current_longest:
+            current_longest.append((date, time, messg))
+
+    return current_longest
+
+
+def sum_of_words(categorised_data_key: list[tuple[str, str, str]]) -> int:
+    """
+    Sum of all words from a list of string
+    """
+
+    total_words: int = 0
+    for date_time_messg in categorised_data_key:
+        messg: str = date_time_messg[2]
+        total_words += len(re.findall(RE_FOR_ALL_WORDS, messg))  # Finds all the words in the string
+    return total_words
+
+
+def sum_of_char(categorised_data_key: list[tuple[str, str, str]]) -> int:
+    """
+    Sum of all chars from a list of string
+    """
+
+    total_char: int = 0
+    for date_time_messg in categorised_data_key:
+        messg: str = date_time_messg[2]
+        for word in re.findall(RE_FOR_ALL_WORDS, messg):  # Finds all the words in the string
+            total_char += len(word.strip())
+    return total_char
+
+
+def list_of_words(categorised_data_key: list[tuple[str, str, str]]) -> list[str]:
+    """
+    Make list of words from list of string
+    It removes links from message string before extracting words in the message
+    It also skips special messages like <media omitted> as they should not be used in the word count
+    Returns list of words
+    """
+
+    link_list: list[str] = get_link_list(categorised_data_key)
+    word_list: list[str] = []
+    for date_time_messg in categorised_data_key:
+        messg: str = date_time_messg[2]
+
+        if messg in [STRING_USED_IN_PLACE_OF_MEDIA, STRING_USED_IN_PLACE_OF_DELETED_MESSG,
+                     STRING_USED_IN_PLACE_OF_YOUR_DELETED_MESSG]:
+            continue
+
+        links_in_messg: list[str] = []
+        for phrase in messg.split():
+            if phrase in link_list:
+                links_in_messg += [phrase]
+
+        for link in links_in_messg:
+            messg = messg.split(link)[-1]
+
+        words_found: list[str] = re.findall(RE_FOR_ALL_WORDS, messg)  # Finds all the words in the string
+        word_list += words_found
+    return word_list
+
+
+def clean_word_list(word_lst: list[str]) -> list[str]:
+    """
+    Uses output of list_of_words()
+    Remove all repeated occurrences in a word list
+    Returns a dictionary with format - word : count
+
+    Assumption, words made of alphabets from any script
+    """
+
+    unique_word_lst: list[str] = []
+
+    for word in word_lst:
+        if any(not chars_in_word.isalpha() for chars_in_word in word):  # Checks if any non-alphabet present
+            continue
+        if word.lower() not in unique_word_lst:
+            unique_word_lst += [word.lower()]
+
+    return unique_word_lst
+
+
+def get_word_count(word_lst: list[str]) -> dict[str, int]:
+    """
+        Uses output of list_of_words()
+        Remove all repeated occurrences in a word list
+        Clears out links and special messages like - <media omitted>
+        Returns a dictionary with format - word : count
+
+        returns dict with key:value -> word:count
+        """
+
+    word_dict: dict[str, int] = {}
+
+    for word in word_lst:
+        if any(not chars_in_word.isalpha() for chars_in_word in word):  # Checks if any non-alphabet present
+            continue
+        word_dict[word.lower()] = word_dict.get(word.lower(), 0) + 1
+
+    return word_dict
+
+
+def person_lst_of_word_to_word_lst_of_people(person_lst_of_word: dict[str, list[str]]) -> dict[str, list[str]]:
+    """
+    The aim of it is to convert dictionary of format - person: list_of unique_words, to the following:
+        unique_word:list_of_people_who_used_it
+    """
+    return_dict: dict[str, list[str]] = {}
+
+    for person in person_lst_of_word:
+        for word in person_lst_of_word[person]:
+            return_dict[word] = return_dict.get(word, []) + [person]
+
+    return return_dict
+
+
+def notif_data(categorised_data_key: list[tuple[str, str, str]]) -> dict:  # no more detail as values of different types
+    """
+    It goes through non-user messages and makes the data clearer
+
+    Note:
+    For Group Name change the data on who changed and what it was changed to can be obtained.
+    so for that portion, only the way the name of the group changed over time and by whom is shown
+    But for the rest, the data of what the change was doesn't exist so more focus has been but who
+    made the changes
+    """
+
+    # We have both an individual counter and total counter, as in this case we want both, and didn't want
+    # the individual parts to be computed to produce the total later
+    data: dict = {
+        "Group Creator": "",
+        "Group Description Change": [0, {}],
+        "Group Video Call": [0, {}],
+        "Group Icon Change": [0, {}],
+        "Group Name": [],
+        "Member Add": [],
+        "Member Subtract": []
+    }
+
+    for date_time_messg in categorised_data_key:
+        date = date_time_messg[0]  # time is determined to be not a useful metric here
+        messg = date_time_messg[2]
+
+        # below ordered by expected chance of encounter, like here creator is at last as it will appear only once
+        if SEARCH_TERM_GRP_VIDEO_CALL in messg:
+            person_name: str = messg.split(SEARCH_TERM_GRP_VIDEO_CALL)[0]
+
+            temp_get_data: list = data["Group Video Call"][1].get(person_name, [0, []])
+            temp_get_data[0] += 1
+            temp_get_data[1] += [date]
+            data["Group Video Call"][1][person_name] = temp_get_data
+            data["Group Video Call"][0] += 1
+
+        elif SEARCH_TERM_GRP_ICON_CHANGE in messg:
+            person_name = messg.split(SEARCH_TERM_GRP_ICON_CHANGE)[0]
+
+            temp_get_data = data["Group Icon Change"][1].get(person_name, [0, []])
+            temp_get_data[0] += 1
+            temp_get_data[1] += [date]
+            data["Group Icon Change"][1][person_name] = temp_get_data
+            data["Group Icon Change"][0] += 1
+
+        elif SEARCH_TERM_GRP_DESC_CHANGE in messg:
+            person_name = messg.split(SEARCH_TERM_GRP_DESC_CHANGE)[0]
+
+            temp_get_data = data["Group Description Change"][1].get(person_name, [0, []])
+            temp_get_data[0] += 1
+            temp_get_data[1] += [date]
+            data["Group Description Change"][1][person_name] = temp_get_data
+            data["Group Description Change"][0] += 1
+
+        elif SEARCH_TERM_GRP_NAME_CHANGE in messg:
+            name_changer: str = messg.split(SEARCH_TERM_GRP_NAME_CHANGE)[0].strip()
+            data["Group Name"].append(
+                (date, name_changer, messg.split(SPLIT_TERM_GRP_NAME_CHANGE_NEW_NAME)[-1].strip())
+            )
+
+        elif SEARCH_TERM_GRP_MEMBER_ADD in messg:
+            split_message: list = messg.split(SEARCH_TERM_GRP_MEMBER_ADD)
+            who_added_member: str = split_message[0].strip()
+            new_member_name: str = split_message[1].strip().capitalize()  # To capitalize Y in "you" if it is = "you"
+            data["Member Add"] += [(new_member_name, who_added_member, date)]
+
+        elif SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK in messg:
+            new_member_name = messg.split(SEARCH_TERM_GRP_MEMBER_JOIN_BY_LINK)[0].strip()
+            who_added_member = "Joined by link"
+            data["Member Add"] += [(new_member_name, who_added_member, date)]
+
+        elif SEARCH_TERM_GRP_MEMBER_LEFT in messg:
+            person_name_who_left: str = messg.split(SEARCH_TERM_GRP_MEMBER_LEFT)[0].strip()
+            removed_by: str = "themselves"
+            data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
+
+        elif SEARCH_TERM_GRP_MEMBER_REMOVED in messg:
+            removed_by = messg.split(SEARCH_TERM_GRP_MEMBER_REMOVED)[0].strip()
+            person_name_who_left = messg.split(SEARCH_TERM_GRP_MEMBER_REMOVED)[1].strip()
+            data["Member Subtract"] += [(person_name_who_left, removed_by, date)]
+
+        elif SEARCH_TERM_GRP_CREATOR in messg:
+            data["Group Creator"] = messg.split(SPLIT_TERM_GRP_CREATOR_NAME)[0].strip()
+            data["Group Name"].append(
+                (date, data["Group Creator"], messg.split(SPLIT_TERM_GRP_CREATOR_GRP_NAME)[-1].strip())
+            )
+
+    return data
+
+
+
+
+
+def int_comma_sep(number: float) -> str:
+    """
+    Make int into str with commas as separators
+    It also rounds long float no
+    """
+
+    rounded_float: float = round(number, 2)
+    return f"{rounded_float:,}"
+
+
+def str_lst_to_str(lst_to_be_printed: list[str]) -> str:
+    """
+    Takes a short list of string like - ['11/08/22', '11/08/22', '30/08/22']
+    Converts into {'11/08/22': 2, '30/08/22': 1}
+    And returns -> '11/08/22 (x2), 30/08/22' (i.e, prints stuff only once and indicates number of repetitions if > 1)
+    """
+
+    word_count: dict[str, int] = {}
+    for element in lst_to_be_printed:
+        word_count[element] = word_count.get(element, 0) + 1
+
+    final_str: str = ""
+
+    for word in word_count:
+        if word_count[word] == 1:
+            final_str += word + ", "
+        else:
+            final_str += word + " (x" + int_comma_sep(word_count[word]) + "), "
+
+    final_str = final_str.rstrip()[:-1]  # To avoid string to end with ','
+
+    return final_str
+
+
+def default_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    handles the default flag data
+    Note - It is not an option available in CLI but still I call it a flag as it is triggered in absence of other     """
+
+    # The print statement to identify the output
+    print("_______________________________________________________")
+    print("| # Overall analysis of member of chat individually - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # The processes
+    #
+    no_of_people_in_chat_currently: int = len(categorised_data.keys())
+
+    # If there are 2 people then it is a chat between 2 or group with 2, and if 1 then a group of 1
+    if no_of_people_in_chat_currently > 2:  # In above cases this info is trivial so not printed out
+        print("Number of people in group currently = " + int_comma_sep(no_of_people_in_chat_currently))
+        print()
+
+    person: str
+    for person in categorised_data:
+        if person == "Notification":  # As we don't want any non-user stuff here
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        counts: tuple[int, int, int] = get_media_deleted_link_count(person_data)
+        no_chars: int = sum_of_char(person_data)
+        no_words: int = sum_of_words(person_data)
+        no_of_unique_words: int = len(clean_word_list(list_of_words(person_data)))
+        oldest_messg_plus_newest_tuple: tuple[str, str] = get_first_and_last_date_ordered_list(person_data)
+
+        print("-" * len(person) + "-----")
+        print("##", person, ":")
+        print("-" * len(person) + "-----")
+        print("No of messages sent in total =", int_comma_sep(len(person_data)))
+        print("No of messages deleted =", int_comma_sep(counts[1]))
+        print("No of photos, videos, audio or GIFs sent =", int_comma_sep(counts[0]))
+        print("No of link shared =", int_comma_sep(counts[2]))
+        print("Number of characters used =", int_comma_sep(no_chars))
+        print("Number of words used =", int_comma_sep(no_words))
+        print("Number of unique words used = ", int_comma_sep(no_of_unique_words))
+        try:
+            print("Average length of words =", int_comma_sep(no_chars/no_words), "characters")
+        except ZeroDivisionError:
+            print("Average length of words = infinite characters")
+        print("Average length of messages =", int_comma_sep(no_words/len(person_data)), "words")
+        print("First message sent on =", oldest_messg_plus_newest_tuple[0])
+        print("Last message sent on =", oldest_messg_plus_newest_tuple[1])
+        print()
+
+
+def total_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Handles for total data
+    """
+
+    # Print statement to identify the output
+    print("_______________________________________________")
+    print("| # Overall analysis of whole chat in total - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # The processes
+    #
+    total_messages: int = 0  # Counter Variables
+    total_deleted: int = 0
+    total_no_media: int = 0
+    total_link_shared: int = 0
+    total_chars: int = 0
+    total_words: int = 0
+
+    total_word_list: list[str] = []
+
+    person: str
+    for person in categorised_data:
+        if person == "Notification":  # As we don't want any non-user stuff here
+            continue
+
+        person_data: list = categorised_data[person]
+        counts: tuple = get_media_deleted_link_count(person_data)
+        no_words: int = sum_of_words(person_data)
+        no_chars: int = sum_of_char(person_data)
+
+        total_messages += len(person_data)
+        total_deleted += counts[1]
+        total_no_media += counts[0]
+        total_link_shared += counts[2]
+        total_chars += no_chars
+        total_words += no_words
+
+        total_word_list += list_of_words(person_data)
+
+    total_word_list = clean_word_list(total_word_list)
+
+    print("----------")
+    print("## Total :")
+    print("----------")
+    print("No of messages sent in total =", int_comma_sep(total_messages))
+    print("No of messages deleted =", int_comma_sep(total_deleted))
+    print("No of photos, videos, audio or GIFs sent =", int_comma_sep(total_no_media))
+    print("No of link shared =", int_comma_sep(total_link_shared))
+    print("Number of characters used =", int_comma_sep(total_chars))
+    print("Number of words used =", int_comma_sep(total_words))
+    print("Number of unique words used = ", int_comma_sep(len(total_word_list)))
+    print("Average length of words =", int_comma_sep(total_chars/total_words), "characters")
+    print("Average length of messages =", int_comma_sep(total_words/total_messages), "words")
+    print()
+
+
+def word_list_flag_simple(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Word Flag Handling for value 1
+    """
+
+    total_word_lst: list[str] = []
+    for person in categorised_data:
+        if person == "Notification":
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        total_word_lst += list_of_words(person_data)
+
+    total_word_lst: list[str] = sorted(clean_word_list(total_word_lst))  # Sort by alphabetic order
+
+    print("----------------------------")
+    print("## Word List (" + int_comma_sep(len(total_word_lst)) + " words) :")
+    print("----------------------------")
+    counter = 1
+    for word in total_word_lst:
+        print(str(counter) + ". \"" + word)
+        counter += 1
+
+
+def word_list_flag_with_counter(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Word Flag Handling for value 2
+    """
+
+    total_word_lst: list[str] = []
+    for person in categorised_data:
+        if person == "Notification":
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+
+        total_word_lst += list_of_words(person_data)
+
+    final_count_dict: dict[str, int] = get_word_count(total_word_lst)  # Sort by alphabetic order
+
+    print("----------------------------")
+    print("## Word List (" + int_comma_sep(len(final_count_dict.keys())) + " words) :")
+    print("----------------------------")
+    counter = 1
+    for word in final_count_dict:
+        count_str: str = int_comma_sep(final_count_dict[word])
+        if count_str == "1":
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " time")
+        else:
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " times")
+        counter += 1
+
+
+def word_list_flag_with_counter_and_sender(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Word Flag Handling for value 3
+    """
+
+    person_word_dict: dict[str, list[str]]
+    person_word_dict = {}
+    total_word_lst: list[str] = []
+
+    person: str
+    for person in categorised_data:
+        if person == "Notification":
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+        words_used_by_person: list[str] = list_of_words(person_data)
+        person_word_dict[person] = clean_word_list(words_used_by_person)
+
+        total_word_lst += words_used_by_person
+
+    final_dict: dict = person_lst_of_word_to_word_lst_of_people(person_word_dict)
+    final_dict = dict(sorted(final_dict.items()))  # Sort by alphabetic order
+    final_count_dict: dict[str, int] = get_word_count(total_word_lst)
+
+    print("----------------------------")
+    print("## Word List (" + int_comma_sep(len(final_dict)) + " words) :")
+    print("----------------------------")
+    counter = 1
+    for word in final_dict:
+        count_str: str = int_comma_sep(final_count_dict[word])
+        if count_str == "1":
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " time by "
+                  + str_lst_to_str(final_dict[word]))
+        else:
+            print(str(counter) + ". \"" + word + "\" = used " + count_str + " times by "
+                  + str_lst_to_str(final_dict[word]))
+        counter += 1
+
+
+def word_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]], type_output: int) -> None:
+    """
+    Word Flag Handling - uses word_list_flag_simple, word_list_flag_with_counter, word_list_flag_with_counter_and_sender
+    """
+
+    # The print statement to identify the output
+    print("______________________________________________")
+    print("| # Word list for all messages in the chat - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # The processes
+    #
+    if type_output == 1:
+        word_list_flag_simple(categorised_data)
+
+    if type_output == 2:
+        word_list_flag_with_counter(categorised_data)
+
+    if type_output == 3:
+        word_list_flag_with_counter_and_sender(categorised_data)
+
+    print()
+
+
+def link_list_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Link List Flag
+    """
+
+    # The print statement to identify output
+    print("______________________________________________")
+    print("| # Link list for all messages in the chat - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # The processes
+    #
+    total_link_lst: list = []
+    counter: int
+
+    person: str
+    for person in categorised_data:
+        if person == "Notification":  # As we don't want any non-user stuff here
+            continue
+
+        person_data: list[tuple[str, str, str]]
+        person_data = categorised_data[person]
+        needed_lst: list = get_link_list(person_data)
+        if needed_lst:
+            total_link_lst += needed_lst
+
+        cleaned_dict: dict[str, list[str]] = clean_sorted_link_dict(count_link_list(needed_lst))
+
+        if not needed_lst:
+            print("-" * len(person) + "-----")
+            print("##", person + " :")
+            print("-" * len(person) + "-----")
+            print("No links shared!")
+        else:
+            print("-" * len(person) + "----------------")
+            print("##", person + " (" + str(len(needed_lst)) + " links) :")
+            print("-" * len(person) + "----------------")
+            for site in cleaned_dict:
+                print(site + " (" + str(len(cleaned_dict[site])) + " links): ")
+                counter = 1
+                for link in cleaned_dict[site]:
+                    print(int_comma_sep(counter) + ".", link)
+                    counter += 1
+                print()
+        print()
+
+    total_cleaned_dict: dict[str, list[str]]
+    total_cleaned_dict = clean_sorted_link_dict(count_link_list(total_link_lst))
+
+    print("---------------------")
+    print("## Total (" + str(len(total_link_lst)) + " links) :")
+    print("---------------------")
+    for site in total_cleaned_dict:
+        print(site + " (" + str(len(total_cleaned_dict[site])) + " links): ")
+        counter = 1
+        for link in total_cleaned_dict[site]:
+            print(int_comma_sep(counter) + ".", link)
+            counter += 1
+        print()
+    print()
+
+
+def notif_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Notification Flag Handling
+    """
+
+    # Print Statement To identify the output
+    print("_____________________________________")
+    print("| # Analysis of non-user messages - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    # Processes
+    #
+    person_data: list = categorised_data.get("Notification", [])
+    counter: int
+
+    if not person_data:
+        print("There are no notification data")
+        return
+    data: dict = notif_data(person_data)
+
+    # Below if-else is used to handle different cases, for example where there is no group icon change
+    # print(), ordered by how important each of them are
+    print("----------------------------------------------------------")
+    print("## Notification (\"You\" - Data exporter; ordered by date) :")  # Has 2 escape chars
+    print("----------------------------------------------------------")
+    if not data["Group Creator"]:
+        print("Information on who created the group could not be found")
+    else:
+        print("The Group was created by =", data["Group Creator"])
+    print()
+
+    if not data["Member Add"]:
+        print("Data on member who joined with group link, or were added couldn't be found")
+    else:
+        print("Member joining sequence (" + int_comma_sep(len(data["Member Add"])) + " additions):")
+        counter = 1
+
+        member_add_tuple: tuple[str, str, str]
+        for member_add_tuple in data["Member Add"]:
+            person_joined, added_by, date_of_join = member_add_tuple
+
+            if added_by == "Joined by link":
+                print(int_comma_sep(counter) + ".", person_joined, "joined by link", "on", date_of_join)
+            else:
+                print(int_comma_sep(counter) + ".", person_joined, "was added by", added_by, "on", date_of_join)
+            counter += 1
+    print()
+
+    if not data["Member Subtract"]:
+        print("Data on member who joined with group link, or were added couldn't be found")
+    else:
+        print("Member leaving/getting removed sequence (" + int_comma_sep(len(data["Member Subtract"])) + " leaves):")
+        counter = 1
+
+        member_subtract_tuple: tuple[str, str, str]
+        for member_subtract_tuple in data["Member Subtract"]:
+            person_removed, removed_by, date_of_remove = member_subtract_tuple
+
+            if removed_by == "themselves":
+                print(int_comma_sep(counter) + ".", person_removed, "left", "on", date_of_remove)
+            else:
+                print(int_comma_sep(counter) + ".", person_removed, "was removed by", removed_by, "on", date_of_remove)
+            counter += 1
+    print()
+
+    if not data["Group Name"]:
+        print("Either group name has never changed, else group name change data couldn't be found")
+    else:
+        print("Group Name Change (" + int_comma_sep(len(data["Group Name"])) + " times):")
+        counter = 1
+
+        record: tuple[str, str, str]
+        for record in data["Group Name"]:
+            date_of_change, who_gave_new_name, new_grp_name_str = record
+            print(int_comma_sep(counter) + ".", new_grp_name_str, "(" + who_gave_new_name + ") - on", date_of_change)
+            counter += 1
+    print()
+
+    # The below is possible as the following are stored in the same format and the key for then in
+    # the data dict is such that they can be used in the output string
+    #
+    similar_format_key: str
+    for similar_format_key in ["Group Icon Change", "Group Description Change", "Group Video Call"]:
+        if not data[similar_format_key][0]:
+            print("Data on " + similar_format_key + " could not be found. Either it is not present in the exported txt,"
+                  " else it has never happened")
+        else:
+            print(similar_format_key + " Record (" + int_comma_sep(data[similar_format_key][0]) + " times):")
+            for person in data[similar_format_key][1]:
+                no_times_str: str = int_comma_sep(data[similar_format_key][1][person][0])
+                date_str: str = str_lst_to_str(data[similar_format_key][1][person][1])
+                print(person + "(" + no_times_str, "times):", date_str)
+        print()
+
+
+def length_flag(categorised_data: dict[str, list[tuple[str, str, str]]]) -> None:
+    """
+    Length finding flag
+    """
+
+    individual_longest_messg: list = []
+    individual_longest_with_person: dict[str, list] = {}
+    counter: int
+
+    print("______________________________________")
+    print("| # Analysis by length of messages - |")
+    print("‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    person: str
+    for person in categorised_data:
+        if person == "Notification":  # As we don't want any non-user stuff here
+            continue
+
+        person_data: list = categorised_data[person]
+        longest_messg_data_lst: list = longest_message_calculate(person_data)
+
+        individual_longest_with_person[person] = longest_messg_data_lst
+        individual_longest_messg += longest_messg_data_lst
+
+        print("-" * len(person) + "-----")
+        print("##", person + " :")
+        print("-" * len(person) + "-----")
+        if len(longest_messg_data_lst) == 1:
+            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2])), "chars) =")
+            print("1. Date: " + longest_messg_data_lst[0][0])
+            print("2. Time: " + longest_messg_data_lst[0][1])
+            print("3. Message: \n\"" + longest_messg_data_lst[0][2].rstrip(), '"', sep="")
+        else:
+            counter = 1
+            print("The longest message by the person (" + int_comma_sep(len(longest_messg_data_lst[0][2])), "chars) =")
+            for messg in longest_messg_data_lst:
+                print(counter)
+                print("a. Date: " + messg[0])
+                print("b. Time: " + messg[1])
+                print("c. Message: \n \"" + messg[2].rstrip(), '"', sep="")
+
+    longest_total_details: list[tuple[str, str, str]]
+    longest_total_details = longest_message_calculate(individual_longest_messg)
+
+    result_for_longest: list = []
+
+    for person in individual_longest_with_person:
+        messg_lst = individual_longest_with_person[person]
+        for messg in messg_lst:
+            if messg in longest_total_details:
+                result_for_longest.append((person, messg))
+
+    print("----------")
+    print("## Total :")
+    print("----------")
+    if len(longest_total_details) == 1:
+        print("The total longest message (" + int_comma_sep(len(result_for_longest[0][1][2])) + " characters long) = ")
+        print("1. Date: " + result_for_longest[0][1][0])
+        print("2. Time: " + result_for_longest[0][1][1])
+        print("3. Message: \n\"" + result_for_longest[0][1][2].rstrip(), '"', sep="")
+    else:
+        counter = 1
+        print("The total longest message (" + int_comma_sep(len(result_for_longest[0][1][2])) + ") = ")
+
+        for messg in result_for_longest:
+            print(counter)
+            print('"', end="")
+            print("1. Date: " + messg[1][0])
+            print("2. Time: " + messg[1][1])
+            print("3. Message: \n\"" + messg[1][2].rstrip(), '"', sep="")
+
+    print()
+
+
+
+def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so no clean way to make it work, so skipped
+    """
+    This is all the code which implements the cli interface for the program
+    """
+
+    # Create a ArgumentParser
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        description="Tool to analyse a WhatsApp Chat. \n Please refer "
+                    "https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on "
+                    "procedure to export chat on a mobile device."
+    )
+
+    # Potion where all the arguments and of the CLI is listed and implemented
+    parser.add_argument(
+        "path",
+        metavar="path",
+        type=str,
+        nargs=1,
+        help="path of exported text file of chat",
+    )
+    parser.add_argument(
+        "-n",
+        "--notification",
+        action="store_true",
+        help="obtain data on non-user messages (specifically for group chats) that occur in group chat, "
+             "like a group's icon was changed",
+    )
+    parser.add_argument(
+        "-t",
+        "--total",
+        action="store_true",
+        help="obtain data on the chat as a whole, in addition to data computed by default "
+             "(case where no flag has been used)",
+    )
+    parser.add_argument(
+        "-ll",
+        "--list-link",
+        action="store_true",
+        help="obtain categorised data of links present in the chat",
+    )
+    parser.add_argument(
+        "-l",
+        "--length",
+        action="store_true",
+        help="obtain detailed results concerning length of message",
+    )
+    parser.add_argument(
+        "-w",
+        "--word-list",
+        type=int,
+        choices=[1, 2, 3],
+        help="obtain list of unique words used [1 for just the list, 2 for 1 + count, and 3 for 2 + sender name]",
+    )
+    arg: argparse.Namespace = parser.parse_args()
+
+    result_dict: dict = {
+        "path": arg.path[0],
+        "total_bool": arg.total,
+        "length_bool": arg.length,
+        "word_list_int": arg.word_list,
+        "notification_bool": arg.notification,
+        "link_list_bool": arg.list_link,
+    }  # Holds the parsed data obtained from cli
+
+    return result_dict
+
+
+start_time: float = time.time()
+input_from_user = cli_implementation()
+path: str = input_from_user["path"]
+total_summary_needed: bool = input_from_user["total_bool"]
+better_length_needed: bool = input_from_user["length_bool"]
+word_list_type: int = input_from_user["word_list_int"]
+notification_needed: bool = input_from_user["notification_bool"]
+link_list_needed: bool = input_from_user["link_list_bool"]
+
+format_bool_tup: tuple[bool, bool] = data_format_android(path)
+extracted_data: list[str] = extract_data(path, format_bool_tup[0], format_bool_tup[1])
+
+categorised_data: dict[str, list[tuple[str, str, str]]]
+categorised_data = categorise_data(extracted_data, format_bool_tup[0])
+
+
+default_case_checker: bool = (
+    not total_summary_needed
+    and not better_length_needed
+    and word_list_type is None
+    and not notification_needed
+    and not link_list_needed
+)
+
+if default_case_checker:
+    default_flag(categorised_data)
+else:
+    if notification_needed:
+        notif_flag(categorised_data)
+    if total_summary_needed:
+        default_flag(categorised_data)
+        total_flag(categorised_data)
+    if link_list_needed:
+        link_list_flag(categorised_data)
+    if better_length_needed:
+        length_flag(categorised_data)
+    if word_list_type is not None:
+        word_list_flag(categorised_data, word_list_type)
+
+print()
+print("🎉🎉🎉 Done!")
+print("And it took only", round(time.time() - start_time, ndigits=2), "seconds")

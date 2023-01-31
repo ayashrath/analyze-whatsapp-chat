@@ -1,7 +1,5 @@
 # whatsapp-analyse: Parse and Analyse WhatsApp Chats
 
-[comment]: <> (Add gif where it is being used)
-
 ## Table of Content
 
 - [Description](#description)
@@ -49,76 +47,24 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
 
 ## Usage
 
-    $ whatsapp-analyse --help 
+    usage: whatsapp_analyse.py [-h] [-n] [-t] [-ll] [-l] [-w {1,2,3}] path
 
-    usage: whatsapp_analyse.py [-h] [-n] [-t] [-ll] [-l] [-w] path
-    
-    Tool to analyse a WhatsApp Chat. Please refer https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on exporting chat on mobile devices
-    
+    Tool to analyse a WhatsApp Chat. Please refer to https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on the procedure to export chat on a mobile device.
+
     positional arguments:
-      path                Path of Exported Text File of Chat
+      path                  path of exported text file of chat
     
     options:
-      -h, --help          show this help message and exit
-      -n, --notification  Obtain data on non-user messages (mainly in group chats) that occur in group chat, like a group's icon was changed
-      -t, --total         Obtain data on the chat as a whole, in addition to data computed by default
-      -ll, --list-link    Obtain data of links present in the chat)
-      -l, --length        Obtain detailed results concerning length of message
-      -w, --word-list     Obtain data on all words used, including how many times it was used and who used it
-    
-For basic individual member's analysis (example.txt can be found in repo's root directory):
+      -h, --help            show this help message and exit
+      -n, --notification    obtain data on non-user messages (specifically for group chats) that occur in group chat, like a group's icon was changed
+      -t, --total           obtain data on the chat as a whole, in addition to data computed by default (case where no flag has been used)
+      -ll, --list-link      obtain categorised data of links present in the chat
+      -l, --length          obtain detailed results concerning the length of messages
+      -w {1,2,3}, --word-list {1,2,3}
+                            obtain the list of unique words used [1 for just the list, 2 for 1 + count, and 3 for 2 + sender name]
 
-    $ whatsapp-analyse example.txt
-
-    _______________________________________________________
-    | # Overall analysis of member of chat individually - |
-    ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-    Number of people in group currently = 3
-    
-    ------
-    ## R :
-    ------
-    No of messages sent in total = 2
-    No of messages deleted = 0
-    No of photos, videos, audio or GIFs sent = 0
-    No of link shared = 0
-    Number of words used = 3
-    Number of characters used = 11
-    First message sent on = 24/02/22
-    Last message sent on = 26/02/22
-    Average length of words = 3.67 characters
-    Average length of messages = 1.5 words
-    
-    ------
-    ## B :
-    ------
-    No of messages sent in total = 9
-    No of messages deleted = 1
-    No of photos, videos, audio or GIFs sent = 1
-    No of link shared = 0
-    Number of words used = 35
-    Number of characters used = 135
-    First message sent on = 24/02/22
-    Last message sent on = 26/02/22
-    Average length of words = 3.86 characters
-    Average length of messages = 3.89 words
-    
-    ------
-    ## K :
-    ------
-    No of messages sent in total = 1
-    No of messages deleted = 0
-    No of photos, videos, audio or GIFs sent = 0
-    No of link shared = 0
-    Number of words used = 6
-    Number of characters used = 13
-    First message sent on = 26/02/22
-    Last message sent on = 26/02/22
-    Average length of words = 2.17 characters
-    Average length of messages = 6.0 words
-    
-    
-    🎉🎉🎉 Done!
+### The default output of the tool
+![Showcase Default Output](./media/default-flag.gif)
 
 ## Limitations
 
@@ -142,14 +88,17 @@ For basic individual member's analysis (example.txt can be found in repo's root 
 
 ## Features to add / Bugs to solve
 
+### Please do report any bugs you encounter, which is not in the list below:
+
 - New flags, that are planned to be added
   - Poll data analysis - Shows details of polls that were present on the group
   - Graphical analysis - Gives graphical output of the analysis, on appropriate areas
   - Date and time analysis - Makes use of the date and time data available
   - Full analysis report return - Generates a full report in a single file, for sharing purposes
 - Emoji count: Gives a count of emojis in default and total flags
-- Improve word list - User inputs the amount of details he requires, 3 levels - simple list, list with counter, all
 - Better data and scripts for testing - As currently there is no proper way for the program to be tested for validity
+- iOS export have different messages for when media is inserted, or a message is deleted - so changes need to be made in operations.py and flags.py
 - Improve build.py
   - Remove inline comments (as the program is already removing other type of comments, so these should also get removed for uniformity)
   - Remove type hints (as some of its features only work in later versions, so some older versions can't execute the final script)
+

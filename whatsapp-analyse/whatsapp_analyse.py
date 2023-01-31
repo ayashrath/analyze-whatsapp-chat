@@ -16,9 +16,9 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
 
     # Create a ArgumentParser
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
-        description="Tool to analyse a WhatsApp Chat. \n Please refer "
+        description="Tool to analyse a WhatsApp Chat. \n Please refer to "
                     "https://github.com/ayashrath/analyse-whatsapp-chat#extract-data for information on "
-                    "procedure to export chat on a mobile device"
+                    "the procedure to export chat on a mobile device."
     )
 
     # Potion where all the arguments and flags of the CLI is listed and implemented
@@ -27,7 +27,7 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
         metavar="path",
         type=str,
         nargs=1,
-        help="path of Exported Text File of Chat",
+        help="path of exported text file of chat",
     )
     parser.add_argument(
         "-n",
@@ -53,14 +53,14 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
         "-l",
         "--length",
         action="store_true",
-        help="obtain detailed results concerning length of message",
+        help="obtain detailed results concerning the length of messages",
     )
     parser.add_argument(
         "-w",
         "--word-list",
         type=int,
         choices=[1, 2, 3],
-        help="obtain list of unique words used [1 for just the list, 2 for 1 + count, and 3 for 2 + sender name]",
+        help="obtain the list of unique words used [1 for just the list, 2 for 1 + count, and 3 for 2 + sender name]",
     )
     arg: argparse.Namespace = parser.parse_args()
 
@@ -107,8 +107,8 @@ default_case_checker: bool = (
     and not link_list_needed
 )
 
-
-if default_case_checker:  # The default case = lack of presence of other flags
+# The default case = lack of presence of other flags
+if default_case_checker:
     flags.default_flag(categorised_data)
 else:
     if notification_needed:
