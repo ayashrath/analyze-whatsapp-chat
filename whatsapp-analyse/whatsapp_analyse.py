@@ -40,8 +40,7 @@ def cli_implementation() -> dict:  # It has 2 types of value - str and bool, so 
         "-t",
         "--total",
         action="store_true",
-        help="obtain data on the chat as a whole, in addition to data computed by default "
-             "(case where no flag has been used)",
+        help="obtain data on the chat individually and as a whole",
     )
     parser.add_argument(
         "-ll",
