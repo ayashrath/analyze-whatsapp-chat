@@ -7,8 +7,8 @@
 - [Extract Data](#extract-data)
 - [Usage](#usage)
 - [Limitations](#limitations)
-- [Building](#building)
-- [Future Features and Known Bugs](#features-to-add--bugs-to-solve)
+- [Making the Executables](#making-the-executables)
+- [Project To-Do List](#project-to-do-list)
 ## Description
 
 whatsapp-analyse is a command-line program to analyse personal or group WhatsApp chats. It requires Python3 to work and will work in all major operating systems.  
@@ -69,13 +69,11 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
 
 ## Limitations
 
-- Requires a mobile device to export data.
-- It works only on the data available by exporting the chat from the mobile app, which means it will not work on any messages that are cleared out.
+- Needs the user to export the whatsapp chat that needs to be analysed manually from a mobile device.
+- It works only on the data available by exporting the chat from the mobile app, which means it will not work on deleted messages.
 - It can't analyse data that may appear on your phone but is not in the exported .txt file. For example - in the app, we can see all the members in the group, but here we can only get a list of all the members who have their chat in the exported .txt file
 
-## Building
-
-### To make a single executable from project files
+## Making the Executables
 
 1. Open the build.py file located in the tests directory.
 2. Change the values of variables FILE_LST, MODULES_LST and BUILD_ON_UNIX_SYSTEM, if required.
@@ -87,19 +85,17 @@ Please refer to the [WhatsApp FAQ Page](https://faq.whatsapp.com/118041407917724
     3. Type in the command prompt or Powershell - `pyinstaller --noconfirm --onefile --console --clean whatsapp-analyse-full`.
     4. Then, the .exe file should be in the dist folder in the directory where you ran the above command.
 
-## Features to add / Bugs to solve
+## Project To-Do List
 
-### Please do report any bugs you encounter which are not in the list below:
-
-- New flags
-  - Poll data analysis - Shows details of polls that were present in the group
-  - Graphical analysis - Gives graphical analysis of appropriate areas
-  - Date and time analysis - Makes use of the date and time data available
-  - Full analysis report return - Generates a full report in a single file for sharing purposes
-- Emoji count: Gives a count of emojis in default and total flags
-- Better data and scripts for testing - currently, there is no proper way for the program to get tested for validity
-- iOS export identifies the type of media - so changes to the iOS analysis.
-- Improve build.py
-  - Remove inline comments (as the program is already removing other types of comments, so these should also get removed for uniformity)
-  - Remove type hints (as some of its features only work in later versions, so some older versions can't execute the final script)
-- Improve the quality of the GIF used.
+- New features to be added
+  - Poll data analysis (new flag): Shows details of polls that were present in the group
+  - Graphical analysis (new flag): Gives graphical analysis of appropriate areas
+  - Date and time analysis (new flag): Makes use of the date and time data available
+  - Full analysis report (new flag): Generates a full report in a single file for sharing purposes
+  - Emoji count (in default and total flag): Gives a count of emojis
+- Testing
+  - New data for testing if everything works properly and validating changes
+  - Scripts to do the testing
+- iOS exports
+  - in iOS exports the type of media can be identified, so type of media data needs to be added in the case of iOS exports
+- Improve showcase GIF's quality
